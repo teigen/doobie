@@ -10,60 +10,45 @@ import cats.implicits._
 import doobie.tagless.async._
 import fs2.Stream
 import fs2.Stream.eval_
-import java.sql
 
+/**
+ * A bundle of configuration sufficient to interpret programs depending on `Connection[F]`, using
+ * a provided `Interpreter[F]`, a transactional `Strategy[F]`, and a `Connector[F]` to provide
+ * fresh connections.
+ */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
 final case class Transactor[F[_]](
-  interp:   Interpreter[F],
-  strategy: Strategy[F],
-  source:   F[java.sql.Connection],
+  interp:    Interpreter[F],
+  strategy:  Strategy[F],
+  connector: Connector[F]
 ) {
 
+  /**
+   * `Resource` yielding a `Connection[F]`, which will be closed after use. Note that `strategy` is
+   * not consulted; any configuration or transactional handling must be performed manually.
+   */
   def connect(implicit ev: Functor[F]): Resource[F, Connection[F]] =
-    Resource.make(source.map(interp.forConnection))(_.jdbc.close)
+    Resource.make(connector.connect.map(interp.forConnection))(_.jdbc.close)
 
   /**
-   * Apply a `Connection[F]` to `f`, with transaction handling as defined by `strategy`, yielding a
-   * computation `F[A]` that will execute on `rts.io`, shifting back to `rts.cpu` on exit.
+   * Apply a `Connection[F]` to `f`, with transaction handling as defined by `strategy`, yielding
+   * an `F[A]`.
    */
-  def transact[A](f: Connection[F] => F[A])(implicit ev: Bracket[F, _]): F[A] =
+  def transact[A](f: Connection[F] => F[A])(implicit ev: Bracket[F, Throwable]): F[A] =
     connect.use { c =>
-      strategy.before(c) *> f(c) <* strategy.after(c)
+      val xa = strategy.before(c) *> f(c) <* strategy.after(c)
+      xa.onError { case _ => strategy.onError(c) }
     }
 
   /**
    * Apply a `Connection[F]` to `f`, with transaction handling as defined by `strategy`, yielding a
-   * `Stream[F, A]` that will execute on `rts.io`, shifting back to `rts.cpu` on termination.
+   * `Stream[F, A]`.
    */
   def transact[A](f: Connection[F] => Stream[F, A])(implicit ev: Functor[F]): Stream[F, A] =
     Stream.resource(connect).flatMap { c =>
-      eval_(strategy.before(c)) ++ f(c) ++ eval_(strategy.after(c))
+      val sxa = eval_(strategy.before(c)) ++ f(c) ++ eval_(strategy.after(c))
+      sxa.onError { case _ => eval_(strategy.onError(c)) }
     }
 
 }
 
-object Transactor {
-
-    @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-    object fromDriverManager {
-
-      @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
-      private def create[M[_]: Async](driver: String, conn: => sql.Connection): Transactor[M] =
-        Transactor(
-          Interpreter.default[M],
-          Strategy.default[M],
-          Sync[M].delay { Class.forName(driver); conn }
-        )
-
-      def apply[M[_]: Async](driver: String, url: String): Transactor[M] =
-        create(driver, sql.DriverManager.getConnection(url))
-
-      def apply[M[_]: Async](driver: String, url: String, user: String, pass: String): Transactor[M] =
-        create(driver, sql.DriverManager.getConnection(url, user, pass))
-
-      def apply[M[_]: Async](driver: String, url: String, info: java.util.Properties): Transactor[M] =
-        create(driver, sql.DriverManager.getConnection(url, info))
-
-    }
-
-}

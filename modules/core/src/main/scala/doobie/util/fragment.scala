@@ -28,7 +28,7 @@ object fragment {
     protected type A                // type of interpolated argument (existential, HNil for none)
     protected def a: A              // the interpolated argument itself
     protected def ca: Write[A]  // proof that we can map the argument to parameters
-    protected def sql: String       // snipped of SQL with `ca.length` placeholders
+    def sql: String       // snipped of SQL with `ca.length` placeholders
 
     /**
      * Construct a program in ConnectionIO that constructs and prepares a PreparedStatement, with
@@ -36,6 +36,9 @@ object fragment {
      */
     def execWith[B](fa: PreparedStatementIO[B]): ConnectionIO[B] =
       HC.prepareStatement(sql)(ca.set(1, a) *> fa)
+
+    def unsafePrepare(ps: java.sql.PreparedStatement): Unit =
+      ca.unsafeSet(ps, 1, a)
 
     // Stack frame, used by the query checker to guess the source position. This will go away at
     // some point, possibly in favor of Haoyi's source position doodad.

@@ -143,37 +143,21 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       if (formalParameterList.isEmpty) s"  def $methodName: F[$returnType]"
       else s"  def $methodName$typeParameterList($formalParameterList): F[$returnType]"
 
-    def syncMethod(oname: String): String =
+    def asyncMethod: String =
       if (formalParameterList.isEmpty)
         s"""|  val $methodName: F[$returnType] =
-            |    F.delay(Console.err.println(s"$${Thread.currentThread}: $oname.$methodName()")) *>
-            |    F.delay(value.$methodName())
-            |""".stripMargin
-      else
-        s"""|  def $methodName$typeParameterList($formalParameterList): F[$returnType] =
-            |    F.delay(Console.err.println(s"$${Thread.currentThread}: $oname.$methodName($arguments)")) *>
-            |    F.delay(value.$methodName($argumentList))
-            |""".stripMargin
-
-    def asyncMethod(oname: String): String =
-      if (formalParameterList.isEmpty)
-        s"""|  val $methodName: F[$returnType] =
-            |    rts.block.use { _ =>
-            |      Sync[F].delay {
-            |        if (log.isTraceEnabled)
-            |          log.trace(s"$$id $methodName()")
-            |        value.$methodName()
-            |      }
+            |    rts.newBlockingPrimitive {
+            |      if (log.isTraceEnabled)
+            |        log.trace(s"$$id $methodName()")
+            |      value.$methodName()
             |    }
             |""".stripMargin
       else
         s"""|  def $methodName$typeParameterList($formalParameterList): F[$returnType] =
-            |    rts.block.use { _ =>
-            |      Sync[F].delay {
-            |        if (log.isTraceEnabled)
-            |          log.trace(s"$$id $methodName($arguments)")
-            |        value.$methodName($argumentList)
-            |      }
+            |    rts.newBlockingPrimitive {
+            |      if (log.isTraceEnabled)
+            |        log.trace(s"$$id $methodName($arguments)")
+            |      value.$methodName($argumentList)
             |    }
             |""".stripMargin
 
@@ -193,31 +177,6 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       |}
       |""".trim.stripMargin
 
-  // The Sync module for A
-  private def sync[A](implicit ev: ClassTag[A]): String = {
-    val oname = ev.runtimeClass.getSimpleName // original name, without name mapping
-    val jname = s"Jdbc${oname}"
-    val aname = s"Sync${oname}"
-    s"""
-      |package $pkg.sync
-      |
-      |import cats.effect.Sync
-      |import cats.implicits._
-      |import $pkg.jdbc._
-      |${imports[A].mkString("\n")}
-      |
-      |/**
-      | * Implementation of $jname that wraps a $oname and lifts its primitive operations into any F
-      | * given a Sync instance.
-      | */
-      |@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-      |class $aname[F[_]](value: $oname)(implicit F: Sync[F]) extends $jname[F] {
-      |
-      |${operations[A].map(_.syncMethod(oname)).mkString("\n")}
-      |}
-      |""".trim.stripMargin
-    }
-
   // The Async module for A
   private def async[A](implicit ev: ClassTag[A]): String = {
     val oname = ev.runtimeClass.getSimpleName // original name, without name mapping
@@ -226,23 +185,22 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
     s"""
       |package $pkg.async
       |
-      |import cats.effect.Sync
       |import $pkg.RTS
       |import $pkg.jdbc._
       |import org.slf4j.Logger
       |${imports[A].mkString("\n")}
       |
       |/**
-      | * Implementation of $jname that wraps a $oname and lifts its primitive operations into any F
-      | * given a Sync instance.
+      | * Implementation of `$jname` that wraps a `java.sql.$oname` and lifts its operations
+      | * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
       | */
       |@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-      |class $aname[F[_]: Sync](value: $oname, rts: RTS[F], log: Logger) extends $jname[F] {
+      |class $aname[F[_]](val value: $oname, rts: RTS[F], log: Logger) extends $jname[F] {
       |
       |  val id: String =
       |    s"$${System.identityHashCode(value).toHexString.padTo(8, ' ')} $oname".padTo(28, ' ')
       |
-      |${operations[A].map(_.asyncMethod(oname)).mkString("\n")}
+      |${operations[A].map(_.asyncMethod).mkString("\n")}
       |}
       |""".trim.stripMargin
     }
@@ -269,31 +227,6 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
   }
 
   // SyncInterpreter
-  def syncInterp: String = {
-
-    def forType[A](implicit ev: ClassTag[A]): String = {
-      val sname = ev.runtimeClass.getSimpleName
-      s"def for$sname(a: $sname) = new Sync$sname[F](a)"
-    }
-
-    s"""
-     |package $pkg.sync
-     |
-     |import cats.effect.Sync
-     |import $pkg.jdbc._
-     |${managed.map(importStatement).mkString("\n")}
-     |
-     |object SyncInterpreter {
-     |  def apply[F[_]: Sync]: JdbcInterpreter[F] =
-     |    new JdbcInterpreter[F] {
-     |      ${managed.map(ClassTag(_)).map(forType(_)).mkString("\n      ") }
-     |    }
-     |}
-     |""".trim.stripMargin
-
-  }
-
-  // SyncInterpreter
   def asyncInterp: String = {
 
     def forType[A](implicit ev: ClassTag[A]): String = {
@@ -310,11 +243,8 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
      |import org.slf4j.Logger
      |${managed.map(importStatement).mkString("\n")}
      |
-     |object AsyncInterpreter {
-     |  def apply[F[_]: Sync](rts: RTS[F], log: Logger): JdbcInterpreter[F] =
-     |    new JdbcInterpreter[F] {
-     |      ${managed.map(ClassTag(_)).map(forType(_)).mkString("\n      ") }
-     |    }
+     |class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger) extends JdbcInterpreter[F] {
+     |  ${managed.map(ClassTag(_)).map(forType(_)).mkString("\n  ") }
      |}
      |""".trim.stripMargin
 
@@ -336,18 +266,6 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       println(s"${c.getName} -> ${file.getName}")
     }
 
-    val syncDir = new File(baseDir, "sync")
-    println("Generating Sync interpreters into " + syncDir)
-    managed.foreach { c =>
-      syncDir.mkdirs
-      val mod  = sync(ClassTag(c))
-      val file = new File(syncDir, s"Sync${c.getSimpleName}.scala")
-      val pw = new PrintWriter(file)
-      pw.println(mod)
-      pw.close()
-      println(s"${c.getName} -> ${file.getName}")
-    }
-
     val asyncDir = new File(baseDir, "async")
     println("Generating Async interpreters into " + asyncDir)
     managed.foreach { c =>
@@ -360,21 +278,11 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       println(s"${c.getName} -> ${file.getName}")
     }
 
-
     {
       println("Generating JdbcInterpreter into " + jdbcDir)
       val file = new File(jdbcDir, s"JdbcInterpreter.scala")
       val pw = new PrintWriter(file)
       pw.println(jdbcInterp)
-      pw.close()
-      println(s"... -> ${file.getName}")
-    }
-
-    {
-      println("Generating SyncInterpreter into " + syncDir)
-      val file = new File(syncDir, s"SyncInterpreter.scala")
-      val pw = new PrintWriter(file)
-      pw.println(syncInterp)
       pw.close()
       println(s"... -> ${file.getName}")
     }

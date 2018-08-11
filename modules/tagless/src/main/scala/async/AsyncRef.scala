@@ -4,7 +4,6 @@
 
 package doobie.tagless.async
 
-import cats.effect.Sync
 import doobie.tagless.RTS
 import doobie.tagless.jdbc._
 import org.slf4j.Logger
@@ -13,49 +12,41 @@ import java.sql.Ref
 import java.util.Map
 
 /**
- * Implementation of JdbcRef that wraps a Ref and lifts its primitive operations into any F
- * given a Sync instance.
+ * Implementation of `JdbcRef` that wraps a `java.sql.Ref` and lifts its operations
+ * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncRef[F[_]: Sync](value: Ref, rts: RTS[F], log: Logger) extends JdbcRef[F] {
+class AsyncRef[F[_]](val value: Ref, rts: RTS[F], log: Logger) extends JdbcRef[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Ref".padTo(28, ' ')
 
   val getBaseTypeName: F[String] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id getBaseTypeName()")
-        value.getBaseTypeName()
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id getBaseTypeName()")
+      value.getBaseTypeName()
     }
 
   val getObject: F[AnyRef] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id getObject()")
-        value.getObject()
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id getObject()")
+      value.getObject()
     }
 
   def getObject(a: Map[String, Class[_]]): F[AnyRef] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id getObject($a)")
-        value.getObject(a)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id getObject($a)")
+      value.getObject(a)
     }
 
   def setObject(a: AnyRef): F[Unit] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id setObject($a)")
-        value.setObject(a)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id setObject($a)")
+      value.setObject(a)
     }
 
 }

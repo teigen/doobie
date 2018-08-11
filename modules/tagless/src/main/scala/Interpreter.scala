@@ -6,7 +6,7 @@ package doobie.tagless
 
 import cats.effect.Async
 import doobie.tagless.async._
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.Logger
 
 final case class Interpreter[F[_]](jdbc: AsyncInterpreter[F]) {
 
@@ -27,17 +27,13 @@ final case class Interpreter[F[_]](jdbc: AsyncInterpreter[F]) {
   def forPreparedStatement(a: java.sql.PreparedStatement): PreparedStatement[F] = PreparedStatement(jdbc.forPreparedStatement(a), this)
   def forCallableStatement(a: java.sql.CallableStatement): CallableStatement[F] = CallableStatement(jdbc.forCallableStatement(a), this)
   def forResultSet(a: java.sql.ResultSet): ResultSet[F] = ResultSet(jdbc.forResultSet(a), this)
+
 }
 
+@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
 object Interpreter {
-
-  def default[M[_]: Async]: Interpreter[M] = {
-    val rts  = RTS.global[M]
-    val log  = LoggerFactory.getLogger("doobie")
-    val jdbc = new AsyncInterpreter[M](rts, log)
-    Interpreter(jdbc)
-  }
-
+  def apply[F[_]: Async](rts: RTS[F], log: Logger): Interpreter[F] =
+    Interpreter(new AsyncInterpreter[F](rts, log))
 }
 
 // Unimplemented

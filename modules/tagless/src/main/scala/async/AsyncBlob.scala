@@ -4,7 +4,6 @@
 
 package doobie.tagless.async
 
-import cats.effect.Sync
 import doobie.tagless.RTS
 import doobie.tagless.jdbc._
 import org.slf4j.Logger
@@ -13,112 +12,90 @@ import java.io.OutputStream
 import java.sql.Blob
 
 /**
- * Implementation of JdbcBlob that wraps a Blob and lifts its primitive operations into any F
- * given a Sync instance.
+ * Implementation of `JdbcBlob` that wraps a `java.sql.Blob` and lifts its operations
+ * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncBlob[F[_]: Sync](value: Blob, rts: RTS[F], log: Logger) extends JdbcBlob[F] {
+class AsyncBlob[F[_]](val value: Blob, rts: RTS[F], log: Logger) extends JdbcBlob[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Blob".padTo(28, ' ')
 
   val free: F[Unit] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id free()")
-        value.free()
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id free()")
+      value.free()
     }
 
   val getBinaryStream: F[InputStream] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id getBinaryStream()")
-        value.getBinaryStream()
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id getBinaryStream()")
+      value.getBinaryStream()
     }
 
   def getBinaryStream(a: Long, b: Long): F[InputStream] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id getBinaryStream($a, $b)")
-        value.getBinaryStream(a, b)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id getBinaryStream($a, $b)")
+      value.getBinaryStream(a, b)
     }
 
   def getBytes(a: Long, b: Int): F[Array[Byte]] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id getBytes($a, $b)")
-        value.getBytes(a, b)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id getBytes($a, $b)")
+      value.getBytes(a, b)
     }
 
   val length: F[Long] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id length()")
-        value.length()
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id length()")
+      value.length()
     }
 
   def position(a: Array[Byte], b: Long): F[Long] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id position($a, $b)")
-        value.position(a, b)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id position($a, $b)")
+      value.position(a, b)
     }
 
   def position(a: Blob, b: Long): F[Long] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id position($a, $b)")
-        value.position(a, b)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id position($a, $b)")
+      value.position(a, b)
     }
 
   def setBinaryStream(a: Long): F[OutputStream] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id setBinaryStream($a)")
-        value.setBinaryStream(a)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id setBinaryStream($a)")
+      value.setBinaryStream(a)
     }
 
   def setBytes(a: Long, b: Array[Byte]): F[Int] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id setBytes($a, $b)")
-        value.setBytes(a, b)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id setBytes($a, $b)")
+      value.setBytes(a, b)
     }
 
   def setBytes(a: Long, b: Array[Byte], c: Int, d: Int): F[Int] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id setBytes($a, $b, $c, $d)")
-        value.setBytes(a, b, c, d)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id setBytes($a, $b, $c, $d)")
+      value.setBytes(a, b, c, d)
     }
 
   def truncate(a: Long): F[Unit] =
-    rts.block.use { _ =>
-      Sync[F].delay {
-        if (log.isTraceEnabled)
-          log.trace(s"$id truncate($a)")
-        value.truncate(a)
-      }
+    rts.newBlockingPrimitive {
+      if (log.isTraceEnabled)
+        log.trace(s"$id truncate($a)")
+      value.truncate(a)
     }
 
 }

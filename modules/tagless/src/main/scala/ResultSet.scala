@@ -4,13 +4,12 @@
 
 package doobie.tagless
 
-import cats.Alternative
-import cats.effect.Sync
+import cats._
 import cats.implicits._
 import doobie.Read
 import doobie.tagless.async._
+import doobie.util.invariant._
 import fs2.Stream
-import java.sql
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
@@ -21,21 +20,49 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
    * Stream the resultset, setting fetch size to `chunkSize`, interpreting rows as type `A`,
    * reading `chunkSize` rows at a time.
    */
-  def stream[A: Read](chunkSize: Int)(
-    implicit sf: Sync[F]
-  ): Stream[F, A] =
+  def stream[A: Read](chunkSize: Int): Stream[F, A] =
     Stream.eval_(jdbc.setFetchSize(chunkSize)) ++
-    Stream.repeatEval(chunk[Vector, A](chunkSize.toLong))
+    Stream.repeatEval(chunk[Vector, A](chunkSize))
           .takeThrough(_.length === chunkSize)
           .flatMap((c: Vector[A]) => Stream.emits(c))
+
+  /** Move to the next row, if any, and read into `A`. */
+  def next[A](
+    implicit ra: Read[A],
+             ev: Monad[F]
+  ): F[Option[A]] = {
+    val unwiseGet: F[A] = interp.rts.newBlockingPrimitive(ra.unsafeGet(jdbc.value, 1))
+    jdbc.next.flatMap {
+      case true  => unwiseGet.map(Some(_))
+      case false => Option.empty[A].pure[F]
+    }
+  }
+
+  /** Move to the next row (if any) and read into `A`, raising an error if more rows exist. */
+  def option[A: Read](
+    implicit ev: MonadError[F, Throwable]
+  ): F[Option[A]] =
+    (next[A], jdbc.next).tupled.flatMap {
+      case (sa @ Some(_), false) => ev.pure(sa)
+      case (Some(_), true)       => ev.raiseError(UnexpectedContinuation)
+      case (None, _)             => ev.pure(None)
+    }
+
+  /** Move to the next row (if any) and read into `A`, raising an error if more rows exist. */
+  def unique[A: Read](
+    implicit ev: MonadError[F, Throwable]
+  ): F[A] =
+    option[A].flatMap {
+      case Some(a) => ev.pure(a)
+      case None    => ev.raiseError(UnexpectedEnd)
+    }
 
   /**
    * Accumulate up to `chunkSize` rows, interpreting rows as type `A`, into a collection `C`,
    * using `CanBuildFrom`, which is very fast.
    */
-  def chunk[C[_], A: Read](chunkSize: Long)(
-    implicit sf: Sync[F],
-            cbf: CanBuildFrom[Nothing, A, C[A]]
+  def chunk[C[_], A: Read](chunkSize: Int)(
+    implicit cbf: CanBuildFrom[Nothing, A, C[A]]
   ): F[C[A]] =
     chunkMap[C, A, A](chunkSize, Predef.identity)
 
@@ -43,9 +70,7 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
    * Accumulate up to `chunkSize` rows, interpreting rows as type `A`, into a collection `C`,
    * using `Alternative`, which is not as fast as `CanBuildFrom`; prefer `chunk` when possible.
    */
-  def chunkA[C[_]: Alternative, A: Read](chunkSize: Long)(
-    implicit sf: Sync[F]
-  ): F[C[A]] =
+  def chunkA[C[_]: Alternative, A: Read](chunkSize: Int): F[C[A]] =
     chunkMapA[C, A, A](chunkSize, Predef.identity)
 
   /**
@@ -53,29 +78,28 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
    * collection `C`, using `CanBuildFrom`, which is very fast.
    */
   @SuppressWarnings(Array("org.wartremover.warts.ToString"))
-  def chunkMap[C[_], A, B](chunkSize: Long, f: A => B)(
+  def chunkMap[C[_], A, B](chunkSize: Int, f: A => B)(
     implicit ca: Read[A],
-             sf: Sync[F],
             cbf: CanBuildFrom[Nothing, B, C[B]]
   ): F[C[B]] =
-    interp.rts.block.use { _ =>
-      sf.delay {
+    interp.rts.newBlockingPrimitive {
 
-        if (interp.log.isTraceEnabled) {
-          val types = ca.gets.map { case (g, _) =>
-            g.typeStack.last.fold("«unknown»")(_.toString)
-          }
-          interp.log.trace(s"${jdbc.id} chunkMap($chunkSize) of ${types.mkString(", ")}")
+      if (interp.log.isTraceEnabled) {
+        val types = ca.gets.map { case (g, _) =>
+          g.typeStack.last.fold("«unknown»")(_.toString)
         }
-
-        @tailrec
-        def go(accum: Builder[B, C[B]], n: Long): C[B] =
-          if (n > 0 && jdbc.value.next) {
-            val b = f(ca.unsafeGet(jdbc.value, 1))
-            go(accum += b, n - 1)
-          } else accum.result
-        go(cbf(), chunkSize)
+        interp.log.trace(s"${jdbc.id} chunkMap($chunkSize) of ${types.mkString(", ")}")
       }
+
+      @tailrec
+      def go(accum: Builder[B, C[B]], n: Int): C[B] =
+        if (n > 0 && jdbc.value.next) {
+          val b = f(ca.unsafeGet(jdbc.value, 1))
+          go(accum += b, n - 1)
+        } else accum.result
+
+      go(cbf(), chunkSize)
+
     }
 
   /**
@@ -83,19 +107,29 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
    * collection `C`, using `Alternative`, which is not as fast as `CanBuildFrom`; prefer `chunkMap`
    * when possible.
    */
-  def chunkMapA[C[_], A, B](chunkSize: Long, f: A => B)(
+  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
+  def chunkMapA[C[_], A, B](chunkSize: Int, f: A => B)(
     implicit ca: Read[A],
-             sf: Sync[F],
              ac: Alternative[C]
   ): F[C[B]] =
-    sf.delay {
+    interp.rts.newBlockingPrimitive {
+
+      if (interp.log.isTraceEnabled) {
+        val types = ca.gets.map { case (g, _) =>
+          g.typeStack.last.fold("«unknown»")(_.toString)
+        }
+        interp.log.trace(s"${jdbc.id} chunkMapA($chunkSize) of ${types.mkString(", ")}")
+      }
+
       @tailrec
-      def go(accum: C[B], n: Long): C[B] =
+      def go(accum: C[B], n: Int): C[B] =
         if (n > 0 && jdbc.value.next) {
           val b = f(ca.unsafeGet(jdbc.value, 1))
           go(accum <+> ac.pure(b), n - 1)
         } else accum
+
       go(ac.empty, chunkSize)
+
     }
 
 }

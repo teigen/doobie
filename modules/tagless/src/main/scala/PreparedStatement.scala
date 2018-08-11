@@ -7,12 +7,15 @@ package doobie.tagless
 import cats._
 import cats.effect.{ Resource, Sync }
 import cats.implicits._
-import doobie.Write
+import doobie.{ Fragment, Write }
 import doobie.tagless.async._
 import fs2.{ Pipe, Sink, Stream }
-import java.sql
 
 final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp: Interpreter[F]) {
+
+  // janky!
+  def setArguments(f: Fragment): F[Unit] =
+    interp.rts.newBlockingPrimitive(f.unsafePrepare(jdbc.value))
 
   /** Execute this statement as a query, yielding a ResultSet[F] that will be cleaned up. */
   def executeQuery(implicit ev: Functor[F]): Resource[F, ResultSet[F]] =
@@ -23,20 +26,15 @@ final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp
    * offset.
    */
   def set[A](a: A, offset: Int)(
-    implicit ca: Write[A],
-             sf: Sync[F]
+    implicit ca: Write[A]
   ): F[Unit] =
-    sf.delay(ca.unsafeSet(jdbc.value, offset, a))
+    interp.rts.newBlockingPrimitive(ca.unsafeSet(jdbc.value, offset, a))
 
   /**
    * Construct a sink for batch update, discarding update counts. Note that the result array will
    * be computed by JDBC and then discarded, so this call has the same cost as `rawPipe`.
    */
-  @SuppressWarnings(Array("org.wartremover.warts.Var"))
-  def sink[A](
-    implicit ca: Write[A],
-             sf: Sync[F]
-  ): Sink[F, A] = as =>
+  def sink[A](implicit ca: Write[A]): Sink[F, A] = as =>
     as.through(rawPipe[A]).drain
 
   /**
@@ -50,27 +48,21 @@ final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp
     as.through(rawPipe[A]).flatMap(a => Stream.emits(a)).map(BatchResult.fromJdbc)
 
   /** Construct a pipe for batch update, emitting a single array containing raw JDBC update counts. */
-  @SuppressWarnings(Array("org.wartremover.warts.Var", "org.wartremover.warts.ToString"))
+  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   private def rawPipe[A](
-    implicit ca: Write[A],
-             sf: Sync[F]
+    implicit ca: Write[A]
   ): Pipe[F, A, Array[Int]] = as =>
-    as.segments.evalMap { segment =>
-      interp.rts.block.use { _ =>
+    as.chunks.evalMap { chunk =>
+      interp.rts.newBlockingPrimitive {
         if (interp.log.isTraceEnabled) {
           val types = ca.puts.map { case (g, _) =>
             g.typeStack.head.fold("«unknown»")(_.toString)
           }
-          interp.log.trace(s"${jdbc.id} addBatch(*) of ${types.mkString(", ")}")
+          interp.log.trace(s"${jdbc.id} addBatch(${chunk.size}) of ${types.mkString(", ")}")
         }
-        sf.delay {
-          val f = segment.force
-          var n = 0
-          f.foreach { a =>
-            ca.unsafeSet(jdbc.value, 1, a)
-            jdbc.value.addBatch
-            n += 1
-          }
+        chunk.foreach { a =>
+          ca.unsafeSet(jdbc.value, 1, a)
+          jdbc.value.addBatch
         }
       }
     } .drain ++ Stream.eval(jdbc.executeBatch)
