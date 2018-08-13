@@ -28,37 +28,38 @@ final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp
   def set[A](a: A, offset: Int)(
     implicit ca: Write[A]
   ): F[Unit] =
-    interp.rts.newBlockingPrimitive(ca.unsafeSet(jdbc.value, offset, a))
+    interp.rts.newBlockingPrimitive(Write[A].unsafeSet(jdbc.value, offset, a))
 
   /**
    * Construct a sink for batch update, discarding update counts. Note that the result array will
    * be computed by JDBC and then discarded, so this call has the same cost as `rawPipe`.
    */
-  def sink[A](implicit ca: Write[A]): Sink[F, A] = as =>
+  def sink[A: Write]: Sink[F, A] = as =>
     as.through(rawPipe[A]).drain
 
   /**
    * Construct a pipe for batch update, translating each input value into its update count. Unless
    * you're inspecting the results it's cheaper to use `sink`.
    */
-  def pipe[A](
-    implicit ca: Write[A],
-             sf: Sync[F]
-  ): Pipe[F, A, BatchResult] = as =>
+  def pipe[A: Write]: Pipe[F, A, BatchResult] = as =>
     as.through(rawPipe[A]).flatMap(a => Stream.emits(a)).map(BatchResult.fromJdbc)
 
-  /** Construct a pipe for batch update, emitting a single array containing raw JDBC update counts. */
+  /**
+   * Construct a pipe for batch update, emitting a single array containing raw JDBC update results.
+   * In the case where the result is discarded (i.e., with `pipe`) there is no need to interpret
+   * the results, hence "raw". This is private to the implementation.
+   */
   @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   private def rawPipe[A](
     implicit ca: Write[A]
   ): Pipe[F, A, Array[Int]] = as =>
     as.chunks.evalMap { chunk =>
       interp.rts.newBlockingPrimitive {
-        if (interp.log.isTraceEnabled) {
+        if (interp.log.underlying.isTraceEnabled) {
           val types = ca.puts.map { case (g, _) =>
             g.typeStack.head.fold("«unknown»")(_.toString)
           }
-          interp.log.trace(s"${jdbc.id} addBatch(${chunk.size}) of ${types.mkString(", ")}")
+          interp.log.underlying.trace(s"${jdbc.id} addBatch(${chunk.size}) of ${types.mkString(", ")}")
         }
         chunk.foreach { a =>
           ca.unsafeSet(jdbc.value, 1, a)

@@ -4,9 +4,9 @@
 
 package doobie.tagless.async
 
-import doobie.tagless.RTS
+import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
-import org.slf4j.Logger
+import org.slf4j.{ Logger => JLogger }
 import java.lang.String
 import java.sql.SQLData
 import java.sql.SQLInput
@@ -17,29 +17,32 @@ import java.sql.SQLOutput
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncSQLData[F[_]](val value: SQLData, rts: RTS[F], log: Logger) extends JdbcSQLData[F] {
+class AsyncSQLData[F[_]](val value: SQLData, rts: RTS[F], log: Logger[F]) extends JdbcSQLData[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} SQLData".padTo(28, ' ')
 
+  private val jlog: JLogger =
+    log.underlying
+
   val getSQLTypeName: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSQLTypeName()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSQLTypeName()")
       value.getSQLTypeName()
     }
 
   def readSQL(a: SQLInput, b: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readSQL($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readSQL($a, $b)")
       value.readSQL(a, b)
     }
 
   def writeSQL(a: SQLOutput): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id writeSQL($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id writeSQL($a)")
       value.writeSQL(a)
     }
 

@@ -7,27 +7,16 @@ package doobie.tagless
 import cats._
 import cats.effect._
 import cats.implicits._
-import doobie.{ Fragment, Read, Write }
 import doobie.syntax.string._
-import fs2._
-import org.slf4j._
+import fs2.{ Stream, Sink }
+
+// WE NEED TO THREAD THE LOGGER THROUGH READ/GET AND WRITE/PUT SO WE CAN SEE WHAT
+// ACTUAL QUERY ARGS AND COLUMN READS ARE. IT'S PROBABLY OK TO ALWAYS LOG ARGS
+// IF WE'RE NOT IMPLEMENTING A SINK, BUT FOR SINKS AND RESULTSETS WE CAN ONLY LOG
+// AT A VERY LOW LEVEL BECAUSE IT'S THE PRIMARY PERF HOTSPOT.
 
 @SuppressWarnings(Array("org.wartremover.warts.ToString"))
 object Test {
-
-  // our query and update classes are trivial now, NICE
-  final case class Query[A](fragment: Fragment, read: Read[A]) { outer =>
-    def map[B](f: A => B): Query[B] =
-      Query[B](fragment, read.map(f))
-  }
-
-  final case class Update[A](fragment: Fragment, read: Write[A]) { outer =>
-    def contramap[B](f: B => A): Update[B] =
-      Update[B](fragment, read.contramap(f))
-  }
-
-
-
 
   final case class Code(code: String)
   final case class Country(code: Code, name: String)
@@ -35,61 +24,70 @@ object Test {
   final implicit class MyConnectionOps[F[_]](c: Connection[F]) {
 
     def countryStream(implicit ev: Bracket[F, Throwable]): Stream[F, Country] =
-      c.stream[Country](MyFragments.countries, 64)
+      c.stream(Statements.countries, 50)
 
     def countrySink(implicit ev: Functor[F]): Sink[F, Country] =
-      c.sink[Country](MyFragments.up)
+      c.sink(Statements.up)
 
     def countriesByCode(k: Code)(implicit ev: Bracket[F, Throwable]): F[List[Country]] =
-      c.to[List, Country](MyFragments.byCode(k))
+      c.to[List](Statements.byCode(k))
 
   }
 
-  object MyFragments {
+  object Statements {
 
-    // but we need sql"...".update[A: Write] as (Fragment, Write[A]) which is checkable,
-    // ans         sql"...".query[A: Read] which is also checkable
+    val countries: Query[Country] =
+      Query(sql"select * from country")
 
-    val countries: Fragment =
-      sql"select * from country"
+    def up: Update[Country] =
+      Update(sql"insert into country2 (code, name) values (?, ?)")
 
-    def up: Fragment =
-      sql"insert into country2 (code, name) values (?, ?)"
-
-    def byCode(c: Code): Fragment =
-      sql"select code, name from country where code = $c"
+    def byCode(c: Code): Query[Country] =
+      Query(sql"select code, name from country where code = $c")
 
   }
 
-  val rts = RTS.default[IO]
-  val log = LoggerFactory.getLogger("test")
-
-  val xa = Transactor[IO](
-    Interpreter(rts, log),
-    Strategy.transactional,
-    Connector.fromDriverManager("org.postgresql.Driver", "jdbc:postgresql:world", "postgres", "")
-  )
-
-  def go[F[_]: Sync](c: Connection[F]): F[Unit] =
+  def dbProgram[F[_]: Sync](log: Logger[F])(c: Connection[F]): F[Unit] =
     for {
       _  <- c.countryStream.to(c.countrySink).compile.drain
-      _  <- Sync[F].delay(log.info("Doing other work inside F"))
+      _  <- log.info("Doing other work inside F")
       cs <- c.countriesByCode(Code("FRA"))
-      _  <- Sync[F].delay(log.info(cs.toString))
+      _  <- log.info(cs.toString)
     } yield ()
 
 
-  val prog: IO[Unit] =
-    rts.enter *>
-    IO(log.info("Starting up.")) *>
-    xa.transact(c => go(c)) *>
-    IO(log.info(s"Done."))
+  def mainProgram[F[_]: Sync](xa: Transactor[F]): F[Unit] =
+    for {
+      _ <- xa.rts.enter
+      _ <- xa.log.info("Starting up.")
+      _ <- xa.transact(dbProgram[F](xa.log)(_))
+      _ <- xa.log.info(s"Done.")
+    } yield ()
+
+  def transactor[F[_]: Async]: Transactor[F] =
+    Transactor[F](
+      Interpreter(
+        RTS.default,
+        Logger.getLogger("test")
+      ),
+      Strategy.transactional,
+      Connector.fromDriverManager(
+        "org.postgresql.Driver",
+        "jdbc:postgresql:world",
+        "postgres",
+        ""
+      )
+    )
 
   def main(args: Array[String]): Unit = {
-    val a = System.setProperty(s"org.slf4j.simpleLogger.log.${log.getName}", "trace")
-    log.info(s"main <enter>")
-    prog.unsafeRunSync
-    log.info(s"main <exit>")
+
+    val xa = transactor[IO]
+
+    (System.setProperty(s"org.slf4j.simpleLogger.log.${xa.log.underlying.getName}", "trace"), ())._2
+
+    xa.log.underlying.info(s"main <enter>")
+    mainProgram(xa).unsafeRunSync
+    xa.log.underlying.info(s"main <exit>")
   }
 
 }

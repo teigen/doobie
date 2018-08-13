@@ -56,7 +56,7 @@ object RTS {
       new ThreadFactory {
         def newThread(r: Runnable): Thread = {
           val th = new Thread(r)
-          th.setName("doobie-rts-global-blocking")
+          th.setName(s"doobie-rts-default-blocking-${th.getId}")
           th.setDaemon(true)
           th
         }

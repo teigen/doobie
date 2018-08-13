@@ -4,9 +4,9 @@
 
 package doobie.tagless.async
 
-import doobie.tagless.RTS
+import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
-import org.slf4j.Logger
+import org.slf4j.{ Logger => JLogger }
 import java.lang.Class
 import java.lang.String
 import java.sql.Blob
@@ -31,386 +31,389 @@ import java.util.concurrent.Executor
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncConnection[F[_]](val value: Connection, rts: RTS[F], log: Logger) extends JdbcConnection[F] {
+class AsyncConnection[F[_]](val value: Connection, rts: RTS[F], log: Logger[F]) extends JdbcConnection[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Connection".padTo(28, ' ')
 
+  private val jlog: JLogger =
+    log.underlying
+
   def abort(a: Executor): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id abort($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id abort($a)")
       value.abort(a)
     }
 
   val clearWarnings: F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id clearWarnings()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id clearWarnings()")
       value.clearWarnings()
     }
 
   val close: F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id close()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id close()")
       value.close()
     }
 
   val commit: F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id commit()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id commit()")
       value.commit()
     }
 
   def createArrayOf(a: String, b: Array[AnyRef]): F[SqlArray] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createArrayOf($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createArrayOf($a, $b)")
       value.createArrayOf(a, b)
     }
 
   val createBlob: F[Blob] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createBlob()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createBlob()")
       value.createBlob()
     }
 
   val createClob: F[Clob] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createClob()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createClob()")
       value.createClob()
     }
 
   val createNClob: F[NClob] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createNClob()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createNClob()")
       value.createNClob()
     }
 
   val createSQLXML: F[SQLXML] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createSQLXML()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createSQLXML()")
       value.createSQLXML()
     }
 
   val createStatement: F[Statement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createStatement()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createStatement()")
       value.createStatement()
     }
 
   def createStatement(a: Int, b: Int): F[Statement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createStatement($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createStatement($a, $b)")
       value.createStatement(a, b)
     }
 
   def createStatement(a: Int, b: Int, c: Int): F[Statement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createStatement($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createStatement($a, $b, $c)")
       value.createStatement(a, b, c)
     }
 
   def createStruct(a: String, b: Array[AnyRef]): F[Struct] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id createStruct($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id createStruct($a, $b)")
       value.createStruct(a, b)
     }
 
   val getAutoCommit: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getAutoCommit()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getAutoCommit()")
       value.getAutoCommit()
     }
 
   val getCatalog: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getCatalog()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getCatalog()")
       value.getCatalog()
     }
 
   val getClientInfo: F[Properties] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getClientInfo()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getClientInfo()")
       value.getClientInfo()
     }
 
   def getClientInfo(a: String): F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getClientInfo($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getClientInfo($a)")
       value.getClientInfo(a)
     }
 
   val getHoldability: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getHoldability()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getHoldability()")
       value.getHoldability()
     }
 
   val getMetaData: F[DatabaseMetaData] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMetaData()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMetaData()")
       value.getMetaData()
     }
 
   val getNetworkTimeout: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getNetworkTimeout()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getNetworkTimeout()")
       value.getNetworkTimeout()
     }
 
   val getSchema: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSchema()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSchema()")
       value.getSchema()
     }
 
   val getTransactionIsolation: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTransactionIsolation()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTransactionIsolation()")
       value.getTransactionIsolation()
     }
 
   val getTypeMap: F[Map[String, Class[_]]] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTypeMap()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTypeMap()")
       value.getTypeMap()
     }
 
   val getWarnings: F[SQLWarning] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getWarnings()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getWarnings()")
       value.getWarnings()
     }
 
   val isClosed: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isClosed()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isClosed()")
       value.isClosed()
     }
 
   val isReadOnly: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isReadOnly()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isReadOnly()")
       value.isReadOnly()
     }
 
   def isValid(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isValid($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isValid($a)")
       value.isValid(a)
     }
 
   def isWrapperFor(a: Class[_]): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isWrapperFor($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isWrapperFor($a)")
       value.isWrapperFor(a)
     }
 
   def nativeSQL(a: String): F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id nativeSQL($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id nativeSQL($a)")
       value.nativeSQL(a)
     }
 
   def prepareCall(a: String): F[CallableStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareCall($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareCall($a)")
       value.prepareCall(a)
     }
 
   def prepareCall(a: String, b: Int, c: Int): F[CallableStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareCall($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareCall($a, $b, $c)")
       value.prepareCall(a, b, c)
     }
 
   def prepareCall(a: String, b: Int, c: Int, d: Int): F[CallableStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareCall($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareCall($a, $b, $c, $d)")
       value.prepareCall(a, b, c, d)
     }
 
   def prepareStatement(a: String): F[PreparedStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareStatement($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareStatement($a)")
       value.prepareStatement(a)
     }
 
   def prepareStatement(a: String, b: Array[Int]): F[PreparedStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareStatement($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareStatement($a, $b)")
       value.prepareStatement(a, b)
     }
 
   def prepareStatement(a: String, b: Array[String]): F[PreparedStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareStatement($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareStatement($a, $b)")
       value.prepareStatement(a, b)
     }
 
   def prepareStatement(a: String, b: Int): F[PreparedStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareStatement($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareStatement($a, $b)")
       value.prepareStatement(a, b)
     }
 
   def prepareStatement(a: String, b: Int, c: Int): F[PreparedStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareStatement($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareStatement($a, $b, $c)")
       value.prepareStatement(a, b, c)
     }
 
   def prepareStatement(a: String, b: Int, c: Int, d: Int): F[PreparedStatement] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id prepareStatement($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id prepareStatement($a, $b, $c, $d)")
       value.prepareStatement(a, b, c, d)
     }
 
   def releaseSavepoint(a: Savepoint): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id releaseSavepoint($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id releaseSavepoint($a)")
       value.releaseSavepoint(a)
     }
 
   val rollback: F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id rollback()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id rollback()")
       value.rollback()
     }
 
   def rollback(a: Savepoint): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id rollback($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id rollback($a)")
       value.rollback(a)
     }
 
   def setAutoCommit(a: Boolean): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setAutoCommit($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setAutoCommit($a)")
       value.setAutoCommit(a)
     }
 
   def setCatalog(a: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setCatalog($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setCatalog($a)")
       value.setCatalog(a)
     }
 
   def setClientInfo(a: Properties): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setClientInfo($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setClientInfo($a)")
       value.setClientInfo(a)
     }
 
   def setClientInfo(a: String, b: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setClientInfo($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setClientInfo($a, $b)")
       value.setClientInfo(a, b)
     }
 
   def setHoldability(a: Int): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setHoldability($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setHoldability($a)")
       value.setHoldability(a)
     }
 
   def setNetworkTimeout(a: Executor, b: Int): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setNetworkTimeout($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setNetworkTimeout($a, $b)")
       value.setNetworkTimeout(a, b)
     }
 
   def setReadOnly(a: Boolean): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setReadOnly($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setReadOnly($a)")
       value.setReadOnly(a)
     }
 
   val setSavepoint: F[Savepoint] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setSavepoint()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setSavepoint()")
       value.setSavepoint()
     }
 
   def setSavepoint(a: String): F[Savepoint] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setSavepoint($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setSavepoint($a)")
       value.setSavepoint(a)
     }
 
   def setSchema(a: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setSchema($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setSchema($a)")
       value.setSchema(a)
     }
 
   def setTransactionIsolation(a: Int): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setTransactionIsolation($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setTransactionIsolation($a)")
       value.setTransactionIsolation(a)
     }
 
   def setTypeMap(a: Map[String, Class[_]]): F[Unit] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id setTypeMap($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id setTypeMap($a)")
       value.setTypeMap(a)
     }
 
   def unwrap[T](a: Class[T]): F[T] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id unwrap($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id unwrap($a)")
       value.unwrap(a)
     }
 

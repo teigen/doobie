@@ -4,9 +4,9 @@
 
 package doobie.tagless.async
 
-import doobie.tagless.RTS
+import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
-import org.slf4j.Logger
+import org.slf4j.{ Logger => JLogger }
 import java.io.InputStream
 import java.io.Reader
 import java.lang.Class
@@ -30,204 +30,207 @@ import java.sql.{ Array => SqlArray }
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncSQLInput[F[_]](val value: SQLInput, rts: RTS[F], log: Logger) extends JdbcSQLInput[F] {
+class AsyncSQLInput[F[_]](val value: SQLInput, rts: RTS[F], log: Logger[F]) extends JdbcSQLInput[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} SQLInput".padTo(28, ' ')
 
+  private val jlog: JLogger =
+    log.underlying
+
   val readArray: F[SqlArray] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readArray()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readArray()")
       value.readArray()
     }
 
   val readAsciiStream: F[InputStream] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readAsciiStream()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readAsciiStream()")
       value.readAsciiStream()
     }
 
   val readBigDecimal: F[BigDecimal] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readBigDecimal()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readBigDecimal()")
       value.readBigDecimal()
     }
 
   val readBinaryStream: F[InputStream] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readBinaryStream()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readBinaryStream()")
       value.readBinaryStream()
     }
 
   val readBlob: F[Blob] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readBlob()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readBlob()")
       value.readBlob()
     }
 
   val readBoolean: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readBoolean()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readBoolean()")
       value.readBoolean()
     }
 
   val readByte: F[Byte] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readByte()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readByte()")
       value.readByte()
     }
 
   val readBytes: F[Array[Byte]] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readBytes()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readBytes()")
       value.readBytes()
     }
 
   val readCharacterStream: F[Reader] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readCharacterStream()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readCharacterStream()")
       value.readCharacterStream()
     }
 
   val readClob: F[Clob] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readClob()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readClob()")
       value.readClob()
     }
 
   val readDate: F[Date] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readDate()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readDate()")
       value.readDate()
     }
 
   val readDouble: F[Double] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readDouble()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readDouble()")
       value.readDouble()
     }
 
   val readFloat: F[Float] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readFloat()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readFloat()")
       value.readFloat()
     }
 
   val readInt: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readInt()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readInt()")
       value.readInt()
     }
 
   val readLong: F[Long] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readLong()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readLong()")
       value.readLong()
     }
 
   val readNClob: F[NClob] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readNClob()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readNClob()")
       value.readNClob()
     }
 
   val readNString: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readNString()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readNString()")
       value.readNString()
     }
 
   val readObject: F[AnyRef] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readObject()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readObject()")
       value.readObject()
     }
 
   def readObject[T](a: Class[T]): F[T] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readObject($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readObject($a)")
       value.readObject(a)
     }
 
   val readRef: F[Ref] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readRef()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readRef()")
       value.readRef()
     }
 
   val readRowId: F[RowId] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readRowId()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readRowId()")
       value.readRowId()
     }
 
   val readSQLXML: F[SQLXML] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readSQLXML()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readSQLXML()")
       value.readSQLXML()
     }
 
   val readShort: F[Short] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readShort()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readShort()")
       value.readShort()
     }
 
   val readString: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readString()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readString()")
       value.readString()
     }
 
   val readTime: F[Time] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readTime()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readTime()")
       value.readTime()
     }
 
   val readTimestamp: F[Timestamp] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readTimestamp()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readTimestamp()")
       value.readTimestamp()
     }
 
   val readURL: F[URL] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id readURL()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id readURL()")
       value.readURL()
     }
 
   val wasNull: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id wasNull()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id wasNull()")
       value.wasNull()
     }
 

@@ -147,16 +147,16 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       if (formalParameterList.isEmpty)
         s"""|  val $methodName: F[$returnType] =
             |    rts.newBlockingPrimitive {
-            |      if (log.isTraceEnabled)
-            |        log.trace(s"$$id $methodName()")
+            |      if (jlog.isTraceEnabled)
+            |        jlog.trace(s"$$id $methodName()")
             |      value.$methodName()
             |    }
             |""".stripMargin
       else
         s"""|  def $methodName$typeParameterList($formalParameterList): F[$returnType] =
             |    rts.newBlockingPrimitive {
-            |      if (log.isTraceEnabled)
-            |        log.trace(s"$$id $methodName($arguments)")
+            |      if (jlog.isTraceEnabled)
+            |        jlog.trace(s"$$id $methodName($arguments)")
             |      value.$methodName($argumentList)
             |    }
             |""".stripMargin
@@ -185,9 +185,9 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
     s"""
       |package $pkg.async
       |
-      |import $pkg.RTS
+      |import $pkg.{ RTS, Logger }
       |import $pkg.jdbc._
-      |import org.slf4j.Logger
+      |import org.slf4j.{ Logger => JLogger }
       |${imports[A].mkString("\n")}
       |
       |/**
@@ -195,10 +195,13 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       | * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
       | */
       |@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-      |class $aname[F[_]](val value: $oname, rts: RTS[F], log: Logger) extends $jname[F] {
+      |class $aname[F[_]](val value: $oname, rts: RTS[F], log: Logger[F]) extends $jname[F] {
       |
       |  val id: String =
       |    s"$${System.identityHashCode(value).toHexString.padTo(8, ' ')} $oname".padTo(28, ' ')
+      |
+      |  private val jlog: JLogger =
+      |    log.underlying
       |
       |${operations[A].map(_.asyncMethod).mkString("\n")}
       |}

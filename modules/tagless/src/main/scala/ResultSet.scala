@@ -84,11 +84,11 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
   ): F[C[B]] =
     interp.rts.newBlockingPrimitive {
 
-      if (interp.log.isTraceEnabled) {
+      if (interp.log.underlying.isTraceEnabled) {
         val types = ca.gets.map { case (g, _) =>
           g.typeStack.last.fold("«unknown»")(_.toString)
         }
-        interp.log.trace(s"${jdbc.id} chunkMap($chunkSize) of ${types.mkString(", ")}")
+        interp.log.underlying.trace(s"${jdbc.id} chunkMap($chunkSize) of ${types.mkString(", ")}")
       }
 
       @tailrec
@@ -114,11 +114,11 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
   ): F[C[B]] =
     interp.rts.newBlockingPrimitive {
 
-      if (interp.log.isTraceEnabled) {
+      if (interp.log.underlying.isTraceEnabled) {
         val types = ca.gets.map { case (g, _) =>
           g.typeStack.last.fold("«unknown»")(_.toString)
         }
-        interp.log.trace(s"${jdbc.id} chunkMapA($chunkSize) of ${types.mkString(", ")}")
+        interp.log.underlying.trace(s"${jdbc.id} chunkMapA($chunkSize) of ${types.mkString(", ")}")
       }
 
       @tailrec

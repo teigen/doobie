@@ -7,7 +7,7 @@ package doobie.tagless
 import cats.{ Alternative, Functor }
 import cats.effect.{ Bracket, Resource }
 import cats.implicits._
-import doobie.{ Fragment, Read, Write }
+import doobie.Fragment
 import doobie.tagless.jdbc._
 import doobie.enum._
 import fs2.{ Sink, Stream }
@@ -16,7 +16,7 @@ import scala.collection.generic.CanBuildFrom
 // TODO: WEAKEN BRACKET TO MONAD WHEN THERE'S A NEW DROP OF CATS-EFFECT
 
 
-@SuppressWarnings(Array("org.wartremover.warts.DefaultArguments"))
+@SuppressWarnings(Array("org.wartremover.warts.DefaultArguments", "org.wartremover.warts.Overloading"))
 final case class Connection[F[_]](jdbc: JdbcConnection[F], interp: Interpreter[F]) {
 
   /** Prepare a statement. */
@@ -49,50 +49,72 @@ final case class Connection[F[_]](jdbc: JdbcConnection[F], interp: Interpreter[F
     } yield rs
 
   /** Stream the results of the specified `Fragment`, reading a `chunkSize` rows at a time. */
-  def stream[A: Read](fragment: Fragment, chunkSize: Int)(
+  def stream[A](query: Query[A], chunkSize: Int)(
     implicit ev: Bracket[F, _]
   ): Stream[F, A] =
-    Stream.resource(executeQuery(fragment, chunkSize)).flatMap(_.stream[A](chunkSize))
+    Stream.resource(executeQuery(query.fragment, chunkSize))
+      .flatMap(_.stream[A](chunkSize)(query.read))
 
   /** Read at most one row, raising an error if more are returned. */
-  def option[A: Read](fragment: Fragment)(
+  def option[A](query: Query[A])(
     implicit ev: Bracket[F, Throwable]
   ): F[Option[A]] =
-    executeQuery(fragment, 2).use(_.option[A])
+    executeQuery(query.fragment, 2).use(_.option[A](query.read, implicitly))
 
   /** Read exactly one row, raising an error otherwise. */
-  def unique[A: Read](fragment: Fragment)(
+  def unique[A](query: Query[A])(
     implicit ev: Bracket[F, Throwable]
   ): F[A] =
-    executeQuery(fragment, 2).use(_.unique[A])
+    executeQuery(query.fragment, 2).use(_.unique[A](query.read, implicitly))
 
   /**
    * Accumulate the results of the specified `Fragment` into a collection `C` with
    * element type `A` using `CanBuildFrom`. This is the fastest way to accumulate a
-   * resultset into a collection.
+   * resultset into a collection. Usage: `c.to[List](myQuery)`
    */
-  def to[C[_], A: Read](fragment: Fragment)(
-    implicit ev: Bracket[F, Throwable],
-            cbf: CanBuildFrom[Nothing, A, C[A]]
-  ): F[C[A]] =
-    executeQuery(fragment, Int.MaxValue).use(_.chunk[C, A](Int.MaxValue))
+  object to {
+
+    def apply[C[_]]: Partial[C] =
+      new Partial[C]
+
+    final class Partial[C[_]] {
+      def apply[A](query: Query[A])(
+        implicit ev: Bracket[F, Throwable],
+                cbf: CanBuildFrom[Nothing, A, C[A]]
+      ): F[C[A]] =
+        executeQuery(query.fragment, Int.MaxValue)
+          .use(_.chunk[C, A](Int.MaxValue)(query.read, implicitly))
+    }
+
+  }
 
   /**
    * Accumulate the results of the specified `Fragment` into a collection `C` with
    * element type `A` using `Alternative`. This is less efficient that `to`, which you
-   * should prefer if a `CanBuildFrom` is available.
+   * should prefer if a `CanBuildFrom` is available. Usage: `c.accumluate[Chain](myQuery)`
    */
-  def accumulate[C[_]: Alternative, A: Read](fragment: Fragment)(
-    implicit ev: Bracket[F, Throwable]
-  ): F[C[A]] =
-    executeQuery(fragment, Int.MaxValue).use(_.chunkA[C, A](Int.MaxValue))
+  object accumulate {
+
+    def apply[C[_]]: Partial[C] =
+      new Partial[C]
+
+    final class Partial[C[_]] {
+      def apply[A](query: Query[A])(
+        implicit ev: Bracket[F, Throwable],
+                 ac: Alternative[C]
+      ): F[C[A]] =
+        executeQuery(query.fragment, Int.MaxValue)
+          .use(_.chunkA[C, A](Int.MaxValue)(implicitly, query.read))
+    }
+
+  }
 
   /** A sink that consumes values of type `A`. */
-  def sink[A: Write](fragment: Fragment)(implicit ev: Functor[F]): Sink[F, A] = sa =>
+  def sink[A](update: Update[A])(implicit ev: Functor[F]): Sink[F, A] = sa =>
     for {
-      ps <- Stream.resource(prepareStatement(fragment.sql))
-      _  <- Stream.eval(ps.setArguments(fragment))
-      _  <- ps.sink[A].apply(sa)
+      ps <- Stream.resource(prepareStatement(update.fragment.sql))
+      _  <- Stream.eval(ps.setArguments(update.fragment))
+      _  <- ps.sink[A](update.write).apply(sa)
     } yield ()
 
 }

@@ -4,9 +4,9 @@
 
 package doobie.tagless.async
 
-import doobie.tagless.RTS
+import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
-import org.slf4j.Logger
+import org.slf4j.{ Logger => JLogger }
 import java.lang.Class
 import java.lang.String
 import java.sql.Connection
@@ -19,1254 +19,1257 @@ import java.sql.RowIdLifetime
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncDatabaseMetaData[F[_]](val value: DatabaseMetaData, rts: RTS[F], log: Logger) extends JdbcDatabaseMetaData[F] {
+class AsyncDatabaseMetaData[F[_]](val value: DatabaseMetaData, rts: RTS[F], log: Logger[F]) extends JdbcDatabaseMetaData[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} DatabaseMetaData".padTo(28, ' ')
 
+  private val jlog: JLogger =
+    log.underlying
+
   val allProceduresAreCallable: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id allProceduresAreCallable()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id allProceduresAreCallable()")
       value.allProceduresAreCallable()
     }
 
   val allTablesAreSelectable: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id allTablesAreSelectable()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id allTablesAreSelectable()")
       value.allTablesAreSelectable()
     }
 
   val autoCommitFailureClosesAllResultSets: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id autoCommitFailureClosesAllResultSets()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id autoCommitFailureClosesAllResultSets()")
       value.autoCommitFailureClosesAllResultSets()
     }
 
   val dataDefinitionCausesTransactionCommit: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id dataDefinitionCausesTransactionCommit()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id dataDefinitionCausesTransactionCommit()")
       value.dataDefinitionCausesTransactionCommit()
     }
 
   val dataDefinitionIgnoredInTransactions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id dataDefinitionIgnoredInTransactions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id dataDefinitionIgnoredInTransactions()")
       value.dataDefinitionIgnoredInTransactions()
     }
 
   def deletesAreDetected(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id deletesAreDetected($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id deletesAreDetected($a)")
       value.deletesAreDetected(a)
     }
 
   val doesMaxRowSizeIncludeBlobs: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id doesMaxRowSizeIncludeBlobs()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id doesMaxRowSizeIncludeBlobs()")
       value.doesMaxRowSizeIncludeBlobs()
     }
 
   val generatedKeyAlwaysReturned: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id generatedKeyAlwaysReturned()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id generatedKeyAlwaysReturned()")
       value.generatedKeyAlwaysReturned()
     }
 
   def getAttributes(a: String, b: String, c: String, d: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getAttributes($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getAttributes($a, $b, $c, $d)")
       value.getAttributes(a, b, c, d)
     }
 
   def getBestRowIdentifier(a: String, b: String, c: String, d: Int, e: Boolean): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getBestRowIdentifier($a, $b, $c, $d, $e)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getBestRowIdentifier($a, $b, $c, $d, $e)")
       value.getBestRowIdentifier(a, b, c, d, e)
     }
 
   val getCatalogSeparator: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getCatalogSeparator()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getCatalogSeparator()")
       value.getCatalogSeparator()
     }
 
   val getCatalogTerm: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getCatalogTerm()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getCatalogTerm()")
       value.getCatalogTerm()
     }
 
   val getCatalogs: F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getCatalogs()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getCatalogs()")
       value.getCatalogs()
     }
 
   val getClientInfoProperties: F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getClientInfoProperties()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getClientInfoProperties()")
       value.getClientInfoProperties()
     }
 
   def getColumnPrivileges(a: String, b: String, c: String, d: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getColumnPrivileges($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getColumnPrivileges($a, $b, $c, $d)")
       value.getColumnPrivileges(a, b, c, d)
     }
 
   def getColumns(a: String, b: String, c: String, d: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getColumns($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getColumns($a, $b, $c, $d)")
       value.getColumns(a, b, c, d)
     }
 
   val getConnection: F[Connection] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getConnection()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getConnection()")
       value.getConnection()
     }
 
   def getCrossReference(a: String, b: String, c: String, d: String, e: String, f: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getCrossReference($a, $b, $c, $d, $e, $f)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getCrossReference($a, $b, $c, $d, $e, $f)")
       value.getCrossReference(a, b, c, d, e, f)
     }
 
   val getDatabaseMajorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDatabaseMajorVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDatabaseMajorVersion()")
       value.getDatabaseMajorVersion()
     }
 
   val getDatabaseMinorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDatabaseMinorVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDatabaseMinorVersion()")
       value.getDatabaseMinorVersion()
     }
 
   val getDatabaseProductName: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDatabaseProductName()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDatabaseProductName()")
       value.getDatabaseProductName()
     }
 
   val getDatabaseProductVersion: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDatabaseProductVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDatabaseProductVersion()")
       value.getDatabaseProductVersion()
     }
 
   val getDefaultTransactionIsolation: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDefaultTransactionIsolation()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDefaultTransactionIsolation()")
       value.getDefaultTransactionIsolation()
     }
 
   val getDriverMajorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDriverMajorVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDriverMajorVersion()")
       value.getDriverMajorVersion()
     }
 
   val getDriverMinorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDriverMinorVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDriverMinorVersion()")
       value.getDriverMinorVersion()
     }
 
   val getDriverName: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDriverName()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDriverName()")
       value.getDriverName()
     }
 
   val getDriverVersion: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getDriverVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getDriverVersion()")
       value.getDriverVersion()
     }
 
   def getExportedKeys(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getExportedKeys($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getExportedKeys($a, $b, $c)")
       value.getExportedKeys(a, b, c)
     }
 
   val getExtraNameCharacters: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getExtraNameCharacters()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getExtraNameCharacters()")
       value.getExtraNameCharacters()
     }
 
   def getFunctionColumns(a: String, b: String, c: String, d: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getFunctionColumns($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getFunctionColumns($a, $b, $c, $d)")
       value.getFunctionColumns(a, b, c, d)
     }
 
   def getFunctions(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getFunctions($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getFunctions($a, $b, $c)")
       value.getFunctions(a, b, c)
     }
 
   val getIdentifierQuoteString: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getIdentifierQuoteString()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getIdentifierQuoteString()")
       value.getIdentifierQuoteString()
     }
 
   def getImportedKeys(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getImportedKeys($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getImportedKeys($a, $b, $c)")
       value.getImportedKeys(a, b, c)
     }
 
   def getIndexInfo(a: String, b: String, c: String, d: Boolean, e: Boolean): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getIndexInfo($a, $b, $c, $d, $e)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getIndexInfo($a, $b, $c, $d, $e)")
       value.getIndexInfo(a, b, c, d, e)
     }
 
   val getJDBCMajorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getJDBCMajorVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getJDBCMajorVersion()")
       value.getJDBCMajorVersion()
     }
 
   val getJDBCMinorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getJDBCMinorVersion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getJDBCMinorVersion()")
       value.getJDBCMinorVersion()
     }
 
   val getMaxBinaryLiteralLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxBinaryLiteralLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxBinaryLiteralLength()")
       value.getMaxBinaryLiteralLength()
     }
 
   val getMaxCatalogNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxCatalogNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxCatalogNameLength()")
       value.getMaxCatalogNameLength()
     }
 
   val getMaxCharLiteralLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxCharLiteralLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxCharLiteralLength()")
       value.getMaxCharLiteralLength()
     }
 
   val getMaxColumnNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxColumnNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxColumnNameLength()")
       value.getMaxColumnNameLength()
     }
 
   val getMaxColumnsInGroupBy: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxColumnsInGroupBy()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxColumnsInGroupBy()")
       value.getMaxColumnsInGroupBy()
     }
 
   val getMaxColumnsInIndex: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxColumnsInIndex()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxColumnsInIndex()")
       value.getMaxColumnsInIndex()
     }
 
   val getMaxColumnsInOrderBy: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxColumnsInOrderBy()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxColumnsInOrderBy()")
       value.getMaxColumnsInOrderBy()
     }
 
   val getMaxColumnsInSelect: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxColumnsInSelect()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxColumnsInSelect()")
       value.getMaxColumnsInSelect()
     }
 
   val getMaxColumnsInTable: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxColumnsInTable()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxColumnsInTable()")
       value.getMaxColumnsInTable()
     }
 
   val getMaxConnections: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxConnections()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxConnections()")
       value.getMaxConnections()
     }
 
   val getMaxCursorNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxCursorNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxCursorNameLength()")
       value.getMaxCursorNameLength()
     }
 
   val getMaxIndexLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxIndexLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxIndexLength()")
       value.getMaxIndexLength()
     }
 
   val getMaxLogicalLobSize: F[Long] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxLogicalLobSize()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxLogicalLobSize()")
       value.getMaxLogicalLobSize()
     }
 
   val getMaxProcedureNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxProcedureNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxProcedureNameLength()")
       value.getMaxProcedureNameLength()
     }
 
   val getMaxRowSize: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxRowSize()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxRowSize()")
       value.getMaxRowSize()
     }
 
   val getMaxSchemaNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxSchemaNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxSchemaNameLength()")
       value.getMaxSchemaNameLength()
     }
 
   val getMaxStatementLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxStatementLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxStatementLength()")
       value.getMaxStatementLength()
     }
 
   val getMaxStatements: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxStatements()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxStatements()")
       value.getMaxStatements()
     }
 
   val getMaxTableNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxTableNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxTableNameLength()")
       value.getMaxTableNameLength()
     }
 
   val getMaxTablesInSelect: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxTablesInSelect()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxTablesInSelect()")
       value.getMaxTablesInSelect()
     }
 
   val getMaxUserNameLength: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getMaxUserNameLength()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getMaxUserNameLength()")
       value.getMaxUserNameLength()
     }
 
   val getNumericFunctions: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getNumericFunctions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getNumericFunctions()")
       value.getNumericFunctions()
     }
 
   def getPrimaryKeys(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getPrimaryKeys($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getPrimaryKeys($a, $b, $c)")
       value.getPrimaryKeys(a, b, c)
     }
 
   def getProcedureColumns(a: String, b: String, c: String, d: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getProcedureColumns($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getProcedureColumns($a, $b, $c, $d)")
       value.getProcedureColumns(a, b, c, d)
     }
 
   val getProcedureTerm: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getProcedureTerm()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getProcedureTerm()")
       value.getProcedureTerm()
     }
 
   def getProcedures(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getProcedures($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getProcedures($a, $b, $c)")
       value.getProcedures(a, b, c)
     }
 
   def getPseudoColumns(a: String, b: String, c: String, d: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getPseudoColumns($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getPseudoColumns($a, $b, $c, $d)")
       value.getPseudoColumns(a, b, c, d)
     }
 
   val getResultSetHoldability: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getResultSetHoldability()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getResultSetHoldability()")
       value.getResultSetHoldability()
     }
 
   val getRowIdLifetime: F[RowIdLifetime] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getRowIdLifetime()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getRowIdLifetime()")
       value.getRowIdLifetime()
     }
 
   val getSQLKeywords: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSQLKeywords()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSQLKeywords()")
       value.getSQLKeywords()
     }
 
   val getSQLStateType: F[Int] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSQLStateType()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSQLStateType()")
       value.getSQLStateType()
     }
 
   val getSchemaTerm: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSchemaTerm()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSchemaTerm()")
       value.getSchemaTerm()
     }
 
   val getSchemas: F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSchemas()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSchemas()")
       value.getSchemas()
     }
 
   def getSchemas(a: String, b: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSchemas($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSchemas($a, $b)")
       value.getSchemas(a, b)
     }
 
   val getSearchStringEscape: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSearchStringEscape()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSearchStringEscape()")
       value.getSearchStringEscape()
     }
 
   val getStringFunctions: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getStringFunctions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getStringFunctions()")
       value.getStringFunctions()
     }
 
   def getSuperTables(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSuperTables($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSuperTables($a, $b, $c)")
       value.getSuperTables(a, b, c)
     }
 
   def getSuperTypes(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSuperTypes($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSuperTypes($a, $b, $c)")
       value.getSuperTypes(a, b, c)
     }
 
   val getSystemFunctions: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getSystemFunctions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getSystemFunctions()")
       value.getSystemFunctions()
     }
 
   def getTablePrivileges(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTablePrivileges($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTablePrivileges($a, $b, $c)")
       value.getTablePrivileges(a, b, c)
     }
 
   val getTableTypes: F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTableTypes()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTableTypes()")
       value.getTableTypes()
     }
 
   def getTables(a: String, b: String, c: String, d: Array[String]): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTables($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTables($a, $b, $c, $d)")
       value.getTables(a, b, c, d)
     }
 
   val getTimeDateFunctions: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTimeDateFunctions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTimeDateFunctions()")
       value.getTimeDateFunctions()
     }
 
   val getTypeInfo: F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getTypeInfo()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getTypeInfo()")
       value.getTypeInfo()
     }
 
   def getUDTs(a: String, b: String, c: String, d: Array[Int]): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getUDTs($a, $b, $c, $d)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getUDTs($a, $b, $c, $d)")
       value.getUDTs(a, b, c, d)
     }
 
   val getURL: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getURL()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getURL()")
       value.getURL()
     }
 
   val getUserName: F[String] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getUserName()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getUserName()")
       value.getUserName()
     }
 
   def getVersionColumns(a: String, b: String, c: String): F[ResultSet] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id getVersionColumns($a, $b, $c)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id getVersionColumns($a, $b, $c)")
       value.getVersionColumns(a, b, c)
     }
 
   def insertsAreDetected(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id insertsAreDetected($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id insertsAreDetected($a)")
       value.insertsAreDetected(a)
     }
 
   val isCatalogAtStart: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isCatalogAtStart()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isCatalogAtStart()")
       value.isCatalogAtStart()
     }
 
   val isReadOnly: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isReadOnly()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isReadOnly()")
       value.isReadOnly()
     }
 
   def isWrapperFor(a: Class[_]): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id isWrapperFor($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id isWrapperFor($a)")
       value.isWrapperFor(a)
     }
 
   val locatorsUpdateCopy: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id locatorsUpdateCopy()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id locatorsUpdateCopy()")
       value.locatorsUpdateCopy()
     }
 
   val nullPlusNonNullIsNull: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id nullPlusNonNullIsNull()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id nullPlusNonNullIsNull()")
       value.nullPlusNonNullIsNull()
     }
 
   val nullsAreSortedAtEnd: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id nullsAreSortedAtEnd()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id nullsAreSortedAtEnd()")
       value.nullsAreSortedAtEnd()
     }
 
   val nullsAreSortedAtStart: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id nullsAreSortedAtStart()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id nullsAreSortedAtStart()")
       value.nullsAreSortedAtStart()
     }
 
   val nullsAreSortedHigh: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id nullsAreSortedHigh()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id nullsAreSortedHigh()")
       value.nullsAreSortedHigh()
     }
 
   val nullsAreSortedLow: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id nullsAreSortedLow()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id nullsAreSortedLow()")
       value.nullsAreSortedLow()
     }
 
   def othersDeletesAreVisible(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id othersDeletesAreVisible($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id othersDeletesAreVisible($a)")
       value.othersDeletesAreVisible(a)
     }
 
   def othersInsertsAreVisible(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id othersInsertsAreVisible($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id othersInsertsAreVisible($a)")
       value.othersInsertsAreVisible(a)
     }
 
   def othersUpdatesAreVisible(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id othersUpdatesAreVisible($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id othersUpdatesAreVisible($a)")
       value.othersUpdatesAreVisible(a)
     }
 
   def ownDeletesAreVisible(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id ownDeletesAreVisible($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id ownDeletesAreVisible($a)")
       value.ownDeletesAreVisible(a)
     }
 
   def ownInsertsAreVisible(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id ownInsertsAreVisible($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id ownInsertsAreVisible($a)")
       value.ownInsertsAreVisible(a)
     }
 
   def ownUpdatesAreVisible(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id ownUpdatesAreVisible($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id ownUpdatesAreVisible($a)")
       value.ownUpdatesAreVisible(a)
     }
 
   val storesLowerCaseIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id storesLowerCaseIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id storesLowerCaseIdentifiers()")
       value.storesLowerCaseIdentifiers()
     }
 
   val storesLowerCaseQuotedIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id storesLowerCaseQuotedIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id storesLowerCaseQuotedIdentifiers()")
       value.storesLowerCaseQuotedIdentifiers()
     }
 
   val storesMixedCaseIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id storesMixedCaseIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id storesMixedCaseIdentifiers()")
       value.storesMixedCaseIdentifiers()
     }
 
   val storesMixedCaseQuotedIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id storesMixedCaseQuotedIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id storesMixedCaseQuotedIdentifiers()")
       value.storesMixedCaseQuotedIdentifiers()
     }
 
   val storesUpperCaseIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id storesUpperCaseIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id storesUpperCaseIdentifiers()")
       value.storesUpperCaseIdentifiers()
     }
 
   val storesUpperCaseQuotedIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id storesUpperCaseQuotedIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id storesUpperCaseQuotedIdentifiers()")
       value.storesUpperCaseQuotedIdentifiers()
     }
 
   val supportsANSI92EntryLevelSQL: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsANSI92EntryLevelSQL()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsANSI92EntryLevelSQL()")
       value.supportsANSI92EntryLevelSQL()
     }
 
   val supportsANSI92FullSQL: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsANSI92FullSQL()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsANSI92FullSQL()")
       value.supportsANSI92FullSQL()
     }
 
   val supportsANSI92IntermediateSQL: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsANSI92IntermediateSQL()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsANSI92IntermediateSQL()")
       value.supportsANSI92IntermediateSQL()
     }
 
   val supportsAlterTableWithAddColumn: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsAlterTableWithAddColumn()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsAlterTableWithAddColumn()")
       value.supportsAlterTableWithAddColumn()
     }
 
   val supportsAlterTableWithDropColumn: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsAlterTableWithDropColumn()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsAlterTableWithDropColumn()")
       value.supportsAlterTableWithDropColumn()
     }
 
   val supportsBatchUpdates: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsBatchUpdates()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsBatchUpdates()")
       value.supportsBatchUpdates()
     }
 
   val supportsCatalogsInDataManipulation: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCatalogsInDataManipulation()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCatalogsInDataManipulation()")
       value.supportsCatalogsInDataManipulation()
     }
 
   val supportsCatalogsInIndexDefinitions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCatalogsInIndexDefinitions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCatalogsInIndexDefinitions()")
       value.supportsCatalogsInIndexDefinitions()
     }
 
   val supportsCatalogsInPrivilegeDefinitions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCatalogsInPrivilegeDefinitions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCatalogsInPrivilegeDefinitions()")
       value.supportsCatalogsInPrivilegeDefinitions()
     }
 
   val supportsCatalogsInProcedureCalls: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCatalogsInProcedureCalls()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCatalogsInProcedureCalls()")
       value.supportsCatalogsInProcedureCalls()
     }
 
   val supportsCatalogsInTableDefinitions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCatalogsInTableDefinitions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCatalogsInTableDefinitions()")
       value.supportsCatalogsInTableDefinitions()
     }
 
   val supportsColumnAliasing: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsColumnAliasing()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsColumnAliasing()")
       value.supportsColumnAliasing()
     }
 
   val supportsConvert: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsConvert()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsConvert()")
       value.supportsConvert()
     }
 
   def supportsConvert(a: Int, b: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsConvert($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsConvert($a, $b)")
       value.supportsConvert(a, b)
     }
 
   val supportsCoreSQLGrammar: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCoreSQLGrammar()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCoreSQLGrammar()")
       value.supportsCoreSQLGrammar()
     }
 
   val supportsCorrelatedSubqueries: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsCorrelatedSubqueries()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsCorrelatedSubqueries()")
       value.supportsCorrelatedSubqueries()
     }
 
   val supportsDataDefinitionAndDataManipulationTransactions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsDataDefinitionAndDataManipulationTransactions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsDataDefinitionAndDataManipulationTransactions()")
       value.supportsDataDefinitionAndDataManipulationTransactions()
     }
 
   val supportsDataManipulationTransactionsOnly: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsDataManipulationTransactionsOnly()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsDataManipulationTransactionsOnly()")
       value.supportsDataManipulationTransactionsOnly()
     }
 
   val supportsDifferentTableCorrelationNames: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsDifferentTableCorrelationNames()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsDifferentTableCorrelationNames()")
       value.supportsDifferentTableCorrelationNames()
     }
 
   val supportsExpressionsInOrderBy: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsExpressionsInOrderBy()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsExpressionsInOrderBy()")
       value.supportsExpressionsInOrderBy()
     }
 
   val supportsExtendedSQLGrammar: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsExtendedSQLGrammar()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsExtendedSQLGrammar()")
       value.supportsExtendedSQLGrammar()
     }
 
   val supportsFullOuterJoins: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsFullOuterJoins()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsFullOuterJoins()")
       value.supportsFullOuterJoins()
     }
 
   val supportsGetGeneratedKeys: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsGetGeneratedKeys()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsGetGeneratedKeys()")
       value.supportsGetGeneratedKeys()
     }
 
   val supportsGroupBy: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsGroupBy()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsGroupBy()")
       value.supportsGroupBy()
     }
 
   val supportsGroupByBeyondSelect: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsGroupByBeyondSelect()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsGroupByBeyondSelect()")
       value.supportsGroupByBeyondSelect()
     }
 
   val supportsGroupByUnrelated: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsGroupByUnrelated()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsGroupByUnrelated()")
       value.supportsGroupByUnrelated()
     }
 
   val supportsIntegrityEnhancementFacility: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsIntegrityEnhancementFacility()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsIntegrityEnhancementFacility()")
       value.supportsIntegrityEnhancementFacility()
     }
 
   val supportsLikeEscapeClause: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsLikeEscapeClause()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsLikeEscapeClause()")
       value.supportsLikeEscapeClause()
     }
 
   val supportsLimitedOuterJoins: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsLimitedOuterJoins()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsLimitedOuterJoins()")
       value.supportsLimitedOuterJoins()
     }
 
   val supportsMinimumSQLGrammar: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsMinimumSQLGrammar()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsMinimumSQLGrammar()")
       value.supportsMinimumSQLGrammar()
     }
 
   val supportsMixedCaseIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsMixedCaseIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsMixedCaseIdentifiers()")
       value.supportsMixedCaseIdentifiers()
     }
 
   val supportsMixedCaseQuotedIdentifiers: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsMixedCaseQuotedIdentifiers()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsMixedCaseQuotedIdentifiers()")
       value.supportsMixedCaseQuotedIdentifiers()
     }
 
   val supportsMultipleOpenResults: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsMultipleOpenResults()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsMultipleOpenResults()")
       value.supportsMultipleOpenResults()
     }
 
   val supportsMultipleResultSets: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsMultipleResultSets()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsMultipleResultSets()")
       value.supportsMultipleResultSets()
     }
 
   val supportsMultipleTransactions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsMultipleTransactions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsMultipleTransactions()")
       value.supportsMultipleTransactions()
     }
 
   val supportsNamedParameters: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsNamedParameters()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsNamedParameters()")
       value.supportsNamedParameters()
     }
 
   val supportsNonNullableColumns: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsNonNullableColumns()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsNonNullableColumns()")
       value.supportsNonNullableColumns()
     }
 
   val supportsOpenCursorsAcrossCommit: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsOpenCursorsAcrossCommit()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsOpenCursorsAcrossCommit()")
       value.supportsOpenCursorsAcrossCommit()
     }
 
   val supportsOpenCursorsAcrossRollback: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsOpenCursorsAcrossRollback()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsOpenCursorsAcrossRollback()")
       value.supportsOpenCursorsAcrossRollback()
     }
 
   val supportsOpenStatementsAcrossCommit: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsOpenStatementsAcrossCommit()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsOpenStatementsAcrossCommit()")
       value.supportsOpenStatementsAcrossCommit()
     }
 
   val supportsOpenStatementsAcrossRollback: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsOpenStatementsAcrossRollback()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsOpenStatementsAcrossRollback()")
       value.supportsOpenStatementsAcrossRollback()
     }
 
   val supportsOrderByUnrelated: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsOrderByUnrelated()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsOrderByUnrelated()")
       value.supportsOrderByUnrelated()
     }
 
   val supportsOuterJoins: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsOuterJoins()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsOuterJoins()")
       value.supportsOuterJoins()
     }
 
   val supportsPositionedDelete: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsPositionedDelete()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsPositionedDelete()")
       value.supportsPositionedDelete()
     }
 
   val supportsPositionedUpdate: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsPositionedUpdate()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsPositionedUpdate()")
       value.supportsPositionedUpdate()
     }
 
   val supportsRefCursors: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsRefCursors()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsRefCursors()")
       value.supportsRefCursors()
     }
 
   def supportsResultSetConcurrency(a: Int, b: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsResultSetConcurrency($a, $b)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsResultSetConcurrency($a, $b)")
       value.supportsResultSetConcurrency(a, b)
     }
 
   def supportsResultSetHoldability(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsResultSetHoldability($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsResultSetHoldability($a)")
       value.supportsResultSetHoldability(a)
     }
 
   def supportsResultSetType(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsResultSetType($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsResultSetType($a)")
       value.supportsResultSetType(a)
     }
 
   val supportsSavepoints: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSavepoints()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSavepoints()")
       value.supportsSavepoints()
     }
 
   val supportsSchemasInDataManipulation: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSchemasInDataManipulation()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSchemasInDataManipulation()")
       value.supportsSchemasInDataManipulation()
     }
 
   val supportsSchemasInIndexDefinitions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSchemasInIndexDefinitions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSchemasInIndexDefinitions()")
       value.supportsSchemasInIndexDefinitions()
     }
 
   val supportsSchemasInPrivilegeDefinitions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSchemasInPrivilegeDefinitions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSchemasInPrivilegeDefinitions()")
       value.supportsSchemasInPrivilegeDefinitions()
     }
 
   val supportsSchemasInProcedureCalls: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSchemasInProcedureCalls()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSchemasInProcedureCalls()")
       value.supportsSchemasInProcedureCalls()
     }
 
   val supportsSchemasInTableDefinitions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSchemasInTableDefinitions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSchemasInTableDefinitions()")
       value.supportsSchemasInTableDefinitions()
     }
 
   val supportsSelectForUpdate: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSelectForUpdate()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSelectForUpdate()")
       value.supportsSelectForUpdate()
     }
 
   val supportsStatementPooling: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsStatementPooling()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsStatementPooling()")
       value.supportsStatementPooling()
     }
 
   val supportsStoredFunctionsUsingCallSyntax: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsStoredFunctionsUsingCallSyntax()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsStoredFunctionsUsingCallSyntax()")
       value.supportsStoredFunctionsUsingCallSyntax()
     }
 
   val supportsStoredProcedures: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsStoredProcedures()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsStoredProcedures()")
       value.supportsStoredProcedures()
     }
 
   val supportsSubqueriesInComparisons: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSubqueriesInComparisons()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSubqueriesInComparisons()")
       value.supportsSubqueriesInComparisons()
     }
 
   val supportsSubqueriesInExists: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSubqueriesInExists()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSubqueriesInExists()")
       value.supportsSubqueriesInExists()
     }
 
   val supportsSubqueriesInIns: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSubqueriesInIns()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSubqueriesInIns()")
       value.supportsSubqueriesInIns()
     }
 
   val supportsSubqueriesInQuantifieds: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsSubqueriesInQuantifieds()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsSubqueriesInQuantifieds()")
       value.supportsSubqueriesInQuantifieds()
     }
 
   val supportsTableCorrelationNames: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsTableCorrelationNames()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsTableCorrelationNames()")
       value.supportsTableCorrelationNames()
     }
 
   def supportsTransactionIsolationLevel(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsTransactionIsolationLevel($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsTransactionIsolationLevel($a)")
       value.supportsTransactionIsolationLevel(a)
     }
 
   val supportsTransactions: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsTransactions()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsTransactions()")
       value.supportsTransactions()
     }
 
   val supportsUnion: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsUnion()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsUnion()")
       value.supportsUnion()
     }
 
   val supportsUnionAll: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id supportsUnionAll()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id supportsUnionAll()")
       value.supportsUnionAll()
     }
 
   def unwrap[T](a: Class[T]): F[T] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id unwrap($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id unwrap($a)")
       value.unwrap(a)
     }
 
   def updatesAreDetected(a: Int): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id updatesAreDetected($a)")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id updatesAreDetected($a)")
       value.updatesAreDetected(a)
     }
 
   val usesLocalFilePerTable: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id usesLocalFilePerTable()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id usesLocalFilePerTable()")
       value.usesLocalFilePerTable()
     }
 
   val usesLocalFiles: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (log.isTraceEnabled)
-        log.trace(s"$id usesLocalFiles()")
+      if (jlog.isTraceEnabled)
+        jlog.trace(s"$id usesLocalFiles()")
       value.usesLocalFiles()
     }
 

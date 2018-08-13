@@ -12,7 +12,11 @@ import fs2.Stream
 import fs2.Stream.eval_
 import java.sql
 
-final case class Connector[F[_]](connect: F[sql.Connection])
+/**
+ * A source of JDBC `Connection`s, allocated in `F`. Lifetime management is the caller's
+ * responsibility (i.e., it's up to you to `close()` the connection when you're done).
+ */
+final case class Connector[F[_]](open: F[sql.Connection])
 
 object Connector {
 

@@ -6,12 +6,14 @@ package doobie.tagless
 
 import cats.effect.Async
 import doobie.tagless.async._
-import org.slf4j.Logger
 
 final case class Interpreter[F[_]](jdbc: AsyncInterpreter[F]) {
 
+  /** The runtime system used for managing blocking operations, provided by `jdbc.rts`. */
   def rts: RTS[F] = jdbc.rts
-  def log: Logger = jdbc.log
+
+  /** The logger used for JDBC tracing, provided by `jdbc.log`. */
+  def log: Logger[F] = jdbc.log
 
   def forNClob(a: java.sql.NClob): NClob[F] = NClob(jdbc.forNClob(a), this)
   def forBlob(a: java.sql.Blob): Blob[F] = Blob(jdbc.forBlob(a), this)
@@ -32,7 +34,7 @@ final case class Interpreter[F[_]](jdbc: AsyncInterpreter[F]) {
 
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
 object Interpreter {
-  def apply[F[_]: Async](rts: RTS[F], log: Logger): Interpreter[F] =
+  def apply[F[_]: Async](rts: RTS[F], log: Logger[F]): Interpreter[F] =
     Interpreter(new AsyncInterpreter[F](rts, log))
 }
 

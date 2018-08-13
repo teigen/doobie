@@ -5,9 +5,8 @@
 package doobie.tagless.async
 
 import cats.effect.Sync
-import doobie.tagless.RTS
+import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
-import org.slf4j.Logger
 import java.sql.NClob
 import java.sql.Blob
 import java.sql.Clob
@@ -23,7 +22,7 @@ import java.sql.PreparedStatement
 import java.sql.CallableStatement
 import java.sql.ResultSet
 
-class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger) extends JdbcInterpreter[F] {
+class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger[F]) extends JdbcInterpreter[F] {
   def forNClob(a: NClob) = new AsyncNClob[F](a, rts, log)
   def forBlob(a: Blob) = new AsyncBlob[F](a, rts, log)
   def forClob(a: Clob) = new AsyncClob[F](a, rts, log)
