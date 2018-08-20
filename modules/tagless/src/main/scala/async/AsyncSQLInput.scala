@@ -30,7 +30,7 @@ import java.sql.{ Array => SqlArray }
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncSQLInput[F[_]](val value: SQLInput, rts: RTS[F], log: Logger[F]) extends JdbcSQLInput[F] {
+class AsyncSQLInput[F[_]](val value: SQLInput, val rts: RTS[F], val log: Logger[F]) extends JdbcSQLInput[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} SQLInput".padTo(28, ' ')

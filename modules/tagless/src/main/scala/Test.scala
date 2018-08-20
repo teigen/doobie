@@ -21,9 +21,10 @@ object Test {
   final case class Code(code: String)
   final case class Country(code: Code, name: String)
 
-  final implicit class MyConnectionOps[F[_]](c: Connection[F]) {
 
-    def countryStream(implicit ev: Bracket[F, Throwable]): Stream[F, Country] =
+  final implicit class CountryRepo[F[_]](val c: Connection[F]) {
+
+    def countryStream(implicit ev: Bracket[F, _]): Stream[F, Country] =
       c.stream(Statements.countries, 50)
 
     def countrySink(implicit ev: Functor[F]): Sink[F, Country] =
@@ -33,6 +34,7 @@ object Test {
       c.to[List](Statements.byCode(k))
 
   }
+
 
   object Statements {
 
@@ -47,7 +49,8 @@ object Test {
 
   }
 
-  def dbProgram[F[_]: Sync](log: Logger[F])(c: Connection[F]): F[Unit] =
+
+  def dbProgram[F[_]: Sync](log: Logger[F], c: Connection[F]): F[Unit] =
     for {
       _  <- c.countryStream.to(c.countrySink).compile.drain
       _  <- log.info("Doing other work inside F")
@@ -60,7 +63,7 @@ object Test {
     for {
       _ <- xa.rts.enter
       _ <- xa.log.info("Starting up.")
-      _ <- xa.transact(dbProgram[F](xa.log)(_))
+      _ <- xa.transact(dbProgram(xa.log, _))
       _ <- xa.log.info(s"Done.")
     } yield ()
 

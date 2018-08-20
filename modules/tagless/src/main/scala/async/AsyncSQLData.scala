@@ -17,7 +17,7 @@ import java.sql.SQLOutput
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncSQLData[F[_]](val value: SQLData, rts: RTS[F], log: Logger[F]) extends JdbcSQLData[F] {
+class AsyncSQLData[F[_]](val value: SQLData, val rts: RTS[F], val log: Logger[F]) extends JdbcSQLData[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} SQLData".padTo(28, ' ')

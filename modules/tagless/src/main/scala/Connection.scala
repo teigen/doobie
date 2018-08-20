@@ -8,7 +8,7 @@ import cats.{ Alternative, Functor }
 import cats.effect.{ Bracket, Resource }
 import cats.implicits._
 import doobie.Fragment
-import doobie.tagless.jdbc._
+import doobie.tagless.async._
 import doobie.enum._
 import fs2.{ Sink, Stream }
 import scala.collection.generic.CanBuildFrom
@@ -17,7 +17,7 @@ import scala.collection.generic.CanBuildFrom
 
 
 @SuppressWarnings(Array("org.wartremover.warts.DefaultArguments", "org.wartremover.warts.Overloading"))
-final case class Connection[F[_]](jdbc: JdbcConnection[F], interp: Interpreter[F]) {
+final case class Connection[F[_]](jdbc: AsyncConnection[F], interp: Interpreter[F]) {
 
   /** Prepare a statement. */
   def prepareStatement(

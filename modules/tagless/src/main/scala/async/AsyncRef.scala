@@ -16,7 +16,7 @@ import java.util.Map
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncRef[F[_]](val value: Ref, rts: RTS[F], log: Logger[F]) extends JdbcRef[F] {
+class AsyncRef[F[_]](val value: Ref, val rts: RTS[F], val log: Logger[F]) extends JdbcRef[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Ref".padTo(28, ' ')

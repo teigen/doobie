@@ -31,7 +31,7 @@ import java.util.concurrent.Executor
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncConnection[F[_]](val value: Connection, rts: RTS[F], log: Logger[F]) extends JdbcConnection[F] {
+class AsyncConnection[F[_]](val value: Connection, val rts: RTS[F], val log: Logger[F]) extends JdbcConnection[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Connection".padTo(28, ' ')

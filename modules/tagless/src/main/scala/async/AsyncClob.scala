@@ -19,7 +19,7 @@ import java.sql.Clob
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncClob[F[_]](val value: Clob, rts: RTS[F], log: Logger[F]) extends JdbcClob[F] {
+class AsyncClob[F[_]](val value: Clob, val rts: RTS[F], val log: Logger[F]) extends JdbcClob[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Clob".padTo(28, ' ')

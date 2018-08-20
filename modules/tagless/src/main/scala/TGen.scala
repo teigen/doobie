@@ -195,7 +195,7 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       | * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
       | */
       |@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-      |class $aname[F[_]](val value: $oname, rts: RTS[F], log: Logger[F]) extends $jname[F] {
+      |class $aname[F[_]](val value: $oname, val rts: RTS[F], val log: Logger[F]) extends $jname[F] {
       |
       |  val id: String =
       |    s"$${System.identityHashCode(value).toHexString.padTo(8, ' ')} $oname".padTo(28, ' ')
@@ -241,12 +241,11 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
      |package $pkg.async
      |
      |import cats.effect.Sync
-     |import $pkg.RTS
+     |import $pkg.{ RTS, Logger }
      |import $pkg.jdbc._
-     |import org.slf4j.Logger
      |${managed.map(importStatement).mkString("\n")}
      |
-     |class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger) extends JdbcInterpreter[F] {
+     |class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger[F]) extends JdbcInterpreter[F] {
      |  ${managed.map(ClassTag(_)).map(forType(_)).mkString("\n  ") }
      |}
      |""".trim.stripMargin

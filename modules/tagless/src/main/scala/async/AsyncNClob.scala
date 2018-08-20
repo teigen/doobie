@@ -20,7 +20,7 @@ import java.sql.NClob
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncNClob[F[_]](val value: NClob, rts: RTS[F], log: Logger[F]) extends JdbcNClob[F] {
+class AsyncNClob[F[_]](val value: NClob, val rts: RTS[F], val log: Logger[F]) extends JdbcNClob[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} NClob".padTo(28, ' ')
