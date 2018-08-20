@@ -4,6 +4,7 @@
 
 package doobie.postgres.hi
 
+import cats.effect.ContextShift
 import cats.implicits._
 import cats.effect.ContextShift
 import doobie._, doobie.implicits._
