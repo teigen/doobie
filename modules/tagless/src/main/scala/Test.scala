@@ -16,25 +16,23 @@ import fs2.{ Stream, Sink }
 // AT A VERY LOW LEVEL BECAUSE IT'S THE PRIMARY PERF HOTSPOT.
 
 @SuppressWarnings(Array("org.wartremover.warts.ToString"))
-object Test {
+object Test extends IOApp {
 
   final case class Code(code: String)
   final case class Country(code: Code, name: String)
 
-
   final implicit class CountryRepo[F[_]](val c: Connection[F]) {
 
-    def countryStream(implicit ev: Bracket[F, _]): Stream[F, Country] =
+    val countryStream: Stream[F, Country] =
       c.stream(Statements.countries, 50)
 
-    def countrySink(implicit ev: Functor[F]): Sink[F, Country] =
+    val countrySink: Sink[F, Country] =
       c.sink(Statements.up)
 
-    def countriesByCode(k: Code)(implicit ev: Bracket[F, Throwable]): F[List[Country]] =
+    def countriesByCode(k: Code): F[List[Country]] =
       c.to[List](Statements.byCode(k))
 
   }
-
 
   object Statements {
 
@@ -49,28 +47,10 @@ object Test {
 
   }
 
-
-  def dbProgram[F[_]: Sync](log: Logger[F], c: Connection[F]): F[Unit] =
-    for {
-      _  <- c.countryStream.to(c.countrySink).compile.drain
-      _  <- log.info("Doing other work inside F")
-      cs <- c.countriesByCode(Code("FRA"))
-      _  <- log.info(cs.toString)
-    } yield ()
-
-
-  def mainProgram[F[_]: Sync](xa: Transactor[F]): F[Unit] =
-    for {
-      _ <- xa.rts.enter
-      _ <- xa.log.info("Starting up.")
-      _ <- xa.transact(dbProgram(xa.log, _))
-      _ <- xa.log.info(s"Done.")
-    } yield ()
-
-  def transactor[F[_]: Async]: Transactor[F] =
+  def transactor[F[_]: Async: RTS]: Transactor[F] = {
     Transactor[F](
       Interpreter(
-        RTS.default,
+        implicitly[RTS[F]],
         Logger.getLogger("test")
       ),
       Strategy.transactional,
@@ -81,17 +61,29 @@ object Test {
         ""
       )
     )
-
-  def main(args: Array[String]): Unit = {
-
-    val xa = transactor[IO]
-
-    (System.setProperty(s"org.slf4j.simpleLogger.log.${xa.log.underlying.getName}", "trace"), ())._2
-
-    xa.log.underlying.info(s"main <enter>")
-    mainProgram(xa).unsafeRunSync
-    xa.log.underlying.info(s"main <exit>")
   }
+
+  def dbProgram[F[_]: Sync](c: Connection[F]): F[Unit] =
+    for {
+      _  <- c.countryStream.to(c.countrySink).compile.drain
+      // _  <- c.log.info("Doing other work inside F")
+      cs <- c.countriesByCode(Code("FRA"))
+      // _  <- c.log.info(cs.toString)
+    } yield ()
+
+  implicit val ioRTS: RTS[IO] =
+    RTS.default[IO]
+
+  val ioTransactor: Transactor[IO] =
+    transactor[IO]
+
+  def run(args: List[String]): IO[ExitCode] =
+    for {
+      _ <- IO(System.setProperty(s"org.slf4j.simpleLogger.log.test", "trace"))
+      _ <- ioTransactor.log.info("Starting up.")
+      _ <- ioTransactor.transact(dbProgram(_))
+      _ <- ioTransactor.log.info(s"Done.")
+    } yield ExitCode.Success
 
 }
 

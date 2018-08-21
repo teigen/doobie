@@ -38,7 +38,7 @@ final case class Strategy[F[_]](
    * logic defined by this strategy.
    */
   def transact[A](f: Connection[F] => Stream[F, A]): Connection[F] => Stream[F, A] = c =>
-    eval_(before(c)) ++ f(c) ++ eval_(after(c)).onError { case _ => eval_(onError(c)) }
+    eval_(before(c)) ++ f(c) ++ eval_(after(c)).handleErrorWith { case _ => eval_(onError(c)) }
 
 }
 

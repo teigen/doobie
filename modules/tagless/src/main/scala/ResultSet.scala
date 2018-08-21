@@ -5,6 +5,7 @@
 package doobie.tagless
 
 import cats._
+import cats.effect.Sync
 import cats.implicits._
 import doobie.Read
 import doobie.tagless.async._
@@ -14,7 +15,7 @@ import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
 
-final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]) {
+final case class ResultSet[F[_]: Sync](jdbc: AsyncResultSet[F], interp: Interpreter[F]) {
 
   /**
    * Stream the resultset, setting fetch size to `chunkSize`, interpreting rows as type `A`,
@@ -28,8 +29,7 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
 
   /** Move to the next row, if any, and read into `A`. */
   def next[A](
-    implicit ra: Read[A],
-             ev: Monad[F]
+    implicit ra: Read[A]
   ): F[Option[A]] = {
     val unwiseGet: F[A] = interp.rts.newBlockingPrimitive(ra.unsafeGet(jdbc.value, 1))
     jdbc.next.flatMap {
@@ -79,13 +79,13 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
    */
   @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   def chunkMap[C[_], A, B](chunkSize: Int, f: A => B)(
-    implicit ca: Read[A],
+    implicit ra: Read[A],
             cbf: CanBuildFrom[Nothing, B, C[B]]
   ): F[C[B]] =
     interp.rts.newBlockingPrimitive {
 
       if (interp.log.underlying.isTraceEnabled) {
-        val types = ca.gets.map { case (g, _) =>
+        val types = ra.gets.map { case (g, _) =>
           g.typeStack.last.fold("«unknown»")(_.toString)
         }
         interp.log.underlying.trace(s"${jdbc.id} chunkMap($chunkSize) of ${types.mkString(", ")}")
@@ -94,7 +94,7 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
       @tailrec
       def go(accum: Builder[B, C[B]], n: Int): C[B] =
         if (n > 0 && jdbc.value.next) {
-          val b = f(ca.unsafeGet(jdbc.value, 1))
+          val b = f(ra.unsafeGet(jdbc.value, 1))
           go(accum += b, n - 1)
         } else accum.result
 
@@ -109,13 +109,13 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
    */
   @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   def chunkMapA[C[_], A, B](chunkSize: Int, f: A => B)(
-    implicit ca: Read[A],
+    implicit ra: Read[A],
              ac: Alternative[C]
   ): F[C[B]] =
     interp.rts.newBlockingPrimitive {
 
       if (interp.log.underlying.isTraceEnabled) {
-        val types = ca.gets.map { case (g, _) =>
+        val types = ra.gets.map { case (g, _) =>
           g.typeStack.last.fold("«unknown»")(_.toString)
         }
         interp.log.underlying.trace(s"${jdbc.id} chunkMapA($chunkSize) of ${types.mkString(", ")}")
@@ -124,7 +124,7 @@ final case class ResultSet[F[_]](jdbc: AsyncResultSet[F], interp: Interpreter[F]
       @tailrec
       def go(accum: C[B], n: Int): C[B] =
         if (n > 0 && jdbc.value.next) {
-          val b = f(ca.unsafeGet(jdbc.value, 1))
+          val b = f(ra.unsafeGet(jdbc.value, 1))
           go(accum <+> ac.pure(b), n - 1)
         } else accum
 

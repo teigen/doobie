@@ -11,7 +11,7 @@ import doobie.{ Fragment, Write }
 import doobie.tagless.async._
 import fs2.{ Pipe, Sink, Stream }
 
-final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp: Interpreter[F]) {
+final case class PreparedStatement[F[_]: Sync](jdbc: AsyncPreparedStatement[F], interp: Interpreter[F]) {
 
   // janky!
   def setArguments(f: Fragment): F[Unit] =
@@ -25,9 +25,7 @@ final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp
    * Set the statement parameters using `A` flattened to a column vector, starting at the given
    * offset.
    */
-  def set[A](a: A, offset: Int)(
-    implicit ca: Write[A]
-  ): F[Unit] =
+  def set[A: Write](a: A, offset: Int): F[Unit] =
     interp.rts.newBlockingPrimitive(Write[A].unsafeSet(jdbc.value, offset, a))
 
   /**
@@ -51,18 +49,18 @@ final case class PreparedStatement[F[_]](jdbc: AsyncPreparedStatement[F], interp
    */
   @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   private def rawPipe[A](
-    implicit ca: Write[A]
+    implicit wa: Write[A]
   ): Pipe[F, A, Array[Int]] = as =>
     as.chunks.evalMap { chunk =>
       interp.rts.newBlockingPrimitive {
         if (interp.log.underlying.isTraceEnabled) {
-          val types = ca.puts.map { case (g, _) =>
+          val types = wa.puts.map { case (g, _) =>
             g.typeStack.head.fold("«unknown»")(_.toString)
           }
           interp.log.underlying.trace(s"${jdbc.id} addBatch(${chunk.size}) of ${types.mkString(", ")}")
         }
         chunk.foreach { a =>
-          ca.unsafeSet(jdbc.value, 1, a)
+          wa.unsafeSet(jdbc.value, 1, a)
           jdbc.value.addBatch
         }
       }

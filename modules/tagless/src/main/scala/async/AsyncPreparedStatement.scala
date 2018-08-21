@@ -4,6 +4,7 @@
 
 package doobie.tagless.async
 
+import cats.effect.Sync
 import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
 import org.slf4j.{ Logger => JLogger }
@@ -37,7 +38,7 @@ import java.util.Calendar
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncPreparedStatement[F[_]](val value: PreparedStatement, val rts: RTS[F], val log: Logger[F]) extends JdbcPreparedStatement[F] {
+class AsyncPreparedStatement[F[_]: Sync](val value: PreparedStatement, val rts: RTS[F], val log: Logger[F]) extends JdbcPreparedStatement[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} PreparedStatement".padTo(28, ' ')

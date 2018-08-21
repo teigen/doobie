@@ -4,10 +4,11 @@
 
 package doobie.tagless
 
-import cats.effect.Async
+import cats.effect.Sync
 import doobie.tagless.async._
+import doobie.tagless.jdbc._
 
-final case class Interpreter[F[_]](jdbc: AsyncInterpreter[F]) {
+final case class Interpreter[F[_]: Sync](jdbc: AsyncInterpreter[F]) {
 
   /** The runtime system used for managing blocking operations, provided by `jdbc.rts`. */
   def rts: RTS[F] = jdbc.rts
@@ -34,7 +35,7 @@ final case class Interpreter[F[_]](jdbc: AsyncInterpreter[F]) {
 
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
 object Interpreter {
-  def apply[F[_]: Async](rts: RTS[F], log: Logger[F]): Interpreter[F] =
+  def apply[F[_]: Sync](rts: RTS[F], log: Logger[F]): Interpreter[F] =
     Interpreter(new AsyncInterpreter[F](rts, log))
 }
 

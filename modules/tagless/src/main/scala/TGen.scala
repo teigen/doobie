@@ -185,6 +185,7 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
     s"""
       |package $pkg.async
       |
+      |import cats.effect.Sync
       |import $pkg.{ RTS, Logger }
       |import $pkg.jdbc._
       |import org.slf4j.{ Logger => JLogger }
@@ -195,7 +196,7 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       | * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
       | */
       |@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-      |class $aname[F[_]](val value: $oname, val rts: RTS[F], val log: Logger[F]) extends $jname[F] {
+      |class $aname[F[_]: Sync](val value: $oname, val rts: RTS[F], val log: Logger[F]) extends $jname[F] {
       |
       |  val id: String =
       |    s"$${System.identityHashCode(value).toHexString.padTo(8, ' ')} $oname".padTo(28, ' ')

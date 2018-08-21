@@ -34,8 +34,8 @@ final case class Transactor[F[_]](
    * `Resource` yielding a `Connection[F]`, which will be closed after use. Note that `strategy` is
    * not consulted; any configuration or transactional handling must be performed manually.
    */
-  def connect(implicit ev: Functor[F]): Resource[F, Connection[F]] =
-    Resource.make(connector.open.map(interp.forConnection))(_.jdbc.close)
+  def connect(implicit ev: Monad[F]): Resource[F, Connection[F]] =
+    connector.connect.map(interp.forConnection)
 
   /**
    * Apply a `Connection[F]` to `f`, with transaction handling as defined by `strategy`, yielding
@@ -48,7 +48,7 @@ final case class Transactor[F[_]](
    * Apply a `Connection[F]` to `f`, with transaction handling as defined by `strategy`, yielding a
    * `Stream[F, A]`.
    */
-  def transactStream[A](f: Connection[F] => Stream[F, A])(implicit ev: Functor[F]): Stream[F, A] =
+  def transactStream[A](f: Connection[F] => Stream[F, A])(implicit ev: Monad[F]): Stream[F, A] =
     Stream.resource(connect).flatMap(strategy.transact(f))
 
 }

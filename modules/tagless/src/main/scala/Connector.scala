@@ -4,19 +4,14 @@
 
 package doobie.tagless
 
-import cats._
 import cats.effect._
 import cats.implicits._
-import doobie.tagless.async._
-import fs2.Stream
-import fs2.Stream.eval_
 import java.sql
 
-/**
- * A source of JDBC `Connection`s, allocated in `F`. Lifetime management is the caller's
- * responsibility (i.e., it's up to you to `close()` the connection when you're done).
- */
-final case class Connector[F[_]](open: F[sql.Connection])
+/** A source of JDBC `Connection`s, allocated in `F`. */
+trait Connector[F[_]] {
+  def connect: Resource[F, sql.Connection]
+}
 
 object Connector {
 
@@ -28,16 +23,31 @@ object Connector {
     object fromDriverManager {
 
       @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
-      private def create[F[_]: Async](driver: String, conn: => sql.Connection): Connector[F] =
-        Connector(Sync[F].delay { Class.forName(driver); conn })
+      private def create[F[_]: Sync](driver: String, conn: => sql.Connection)(
+        implicit rts: RTS[F]
+      ): Connector[F] =
+        new Connector[F] {
+          def connect =
+            Resource.make(
+              rts.newBlockingPrimitive {
+                Class.forName(driver)
+                val c = conn
+                rts.log.trace(c, "«fresh connection»")
+                c
+              }
+            )(c => rts.newBlockingPrimitive {
+              org.slf4j.LoggerFactory.getLogger("***").trace("CLOSING CONNECTION")
+              c.close
+            })
+        }
 
-      def apply[F[_]: Async](driver: String, url: String): Connector[F] =
+      def apply[F[_]: RTS: Sync](driver: String, url: String): Connector[F] =
         create(driver, sql.DriverManager.getConnection(url))
 
-      def apply[F[_]: Async](driver: String, url: String, user: String, pass: String): Connector[F] =
+      def apply[F[_]: RTS: Sync](driver: String, url: String, user: String, pass: String): Connector[F] =
         create(driver, sql.DriverManager.getConnection(url, user, pass))
 
-      def apply[F[_]: Async](driver: String, url: String, info: java.util.Properties): Connector[F] =
+      def apply[F[_]: RTS: Sync](driver: String, url: String, info: java.util.Properties): Connector[F] =
         create(driver, sql.DriverManager.getConnection(url, info))
 
     }

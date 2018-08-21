@@ -4,6 +4,7 @@
 
 package doobie.tagless.async
 
+import cats.effect.Sync
 import doobie.tagless.{ RTS, Logger }
 import doobie.tagless.jdbc._
 import org.slf4j.{ Logger => JLogger }
@@ -19,7 +20,7 @@ import java.sql.RowIdLifetime
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncDatabaseMetaData[F[_]](val value: DatabaseMetaData, val rts: RTS[F], val log: Logger[F]) extends JdbcDatabaseMetaData[F] {
+class AsyncDatabaseMetaData[F[_]: Sync](val value: DatabaseMetaData, val rts: RTS[F], val log: Logger[F]) extends JdbcDatabaseMetaData[F] {
 
   val id: String =
     s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} DatabaseMetaData".padTo(28, ' ')
