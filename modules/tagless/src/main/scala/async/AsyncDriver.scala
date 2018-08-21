@@ -20,60 +20,47 @@ import java.util.logging.{ Logger => JdkLogger }
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncDriver[F[_]: Sync](val value: Driver, val rts: RTS[F], val log: Logger[F]) extends JdbcDriver[F] {
-
-  val id: String =
-    s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Driver".padTo(28, ' ')
-
-  private val jlog: JLogger =
-    log.underlying
+class AsyncDriver[F[_]: Sync](val value: Driver, val rts: RTS[F]) extends JdbcDriver[F] {
 
   def acceptsURL(a: String): F[Boolean] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id acceptsURL($a)")
+      rts.log.unsafe.trace(value, s"acceptsURL($a)")
       value.acceptsURL(a)
     }
 
   def connect(a: String, b: Properties): F[Connection] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id connect($a, $b)")
+      rts.log.unsafe.trace(value, s"connect($a, $b)")
       value.connect(a, b)
     }
 
   val getMajorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getMajorVersion()")
+      rts.log.unsafe.trace(value, "getMajorVersion()")
       value.getMajorVersion()
     }
 
   val getMinorVersion: F[Int] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getMinorVersion()")
+      rts.log.unsafe.trace(value, "getMinorVersion()")
       value.getMinorVersion()
     }
 
   val getParentLogger: F[JdkLogger] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getParentLogger()")
+      rts.log.unsafe.trace(value, "getParentLogger()")
       value.getParentLogger()
     }
 
   def getPropertyInfo(a: String, b: Properties): F[Array[DriverPropertyInfo]] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getPropertyInfo($a, $b)")
+      rts.log.unsafe.trace(value, s"getPropertyInfo($a, $b)")
       value.getPropertyInfo(a, b)
     }
 
   val jdbcCompliant: F[Boolean] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id jdbcCompliant()")
+      rts.log.unsafe.trace(value, "jdbcCompliant()")
       value.jdbcCompliant()
     }
 

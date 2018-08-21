@@ -147,16 +147,14 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       if (formalParameterList.isEmpty)
         s"""|  val $methodName: F[$returnType] =
             |    rts.newBlockingPrimitive {
-            |      if (jlog.isTraceEnabled)
-            |        jlog.trace(s"$$id $methodName()")
+            |      rts.log.unsafe.trace(value, "$methodName()")
             |      value.$methodName()
             |    }
             |""".stripMargin
       else
         s"""|  def $methodName$typeParameterList($formalParameterList): F[$returnType] =
             |    rts.newBlockingPrimitive {
-            |      if (jlog.isTraceEnabled)
-            |        jlog.trace(s"$$id $methodName($arguments)")
+            |      rts.log.unsafe.trace(value, s"$methodName($arguments)")
             |      value.$methodName($argumentList)
             |    }
             |""".stripMargin
@@ -196,13 +194,7 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
       | * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
       | */
       |@SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-      |class $aname[F[_]: Sync](val value: $oname, val rts: RTS[F], val log: Logger[F]) extends $jname[F] {
-      |
-      |  val id: String =
-      |    s"$${System.identityHashCode(value).toHexString.padTo(8, ' ')} $oname".padTo(28, ' ')
-      |
-      |  private val jlog: JLogger =
-      |    log.underlying
+      |class $aname[F[_]: Sync](val value: $oname, val rts: RTS[F]) extends $jname[F] {
       |
       |${operations[A].map(_.asyncMethod).mkString("\n")}
       |}
@@ -235,7 +227,7 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
 
     def forType[A](implicit ev: ClassTag[A]): String = {
       val sname = ev.runtimeClass.getSimpleName
-      s"def for$sname(a: $sname) = new Async$sname[F](a, rts, log)"
+      s"def for$sname(a: $sname) = new Async$sname[F](a, rts)"
     }
 
     s"""
@@ -246,7 +238,7 @@ class TGen(managed: List[Class[_]], pkg: String, renames: Map[Class[_], String])
      |import $pkg.jdbc._
      |${managed.map(importStatement).mkString("\n")}
      |
-     |class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger[F]) extends JdbcInterpreter[F] {
+     |class AsyncInterpreter[F[_]: Sync](val rts: RTS[F]) extends JdbcInterpreter[F] {
      |  ${managed.map(ClassTag(_)).map(forType(_)).mkString("\n  ") }
      |}
      |""".trim.stripMargin

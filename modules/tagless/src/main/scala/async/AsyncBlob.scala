@@ -17,88 +17,71 @@ import java.sql.Blob
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncBlob[F[_]: Sync](val value: Blob, val rts: RTS[F], val log: Logger[F]) extends JdbcBlob[F] {
-
-  val id: String =
-    s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Blob".padTo(28, ' ')
-
-  private val jlog: JLogger =
-    log.underlying
+class AsyncBlob[F[_]: Sync](val value: Blob, val rts: RTS[F]) extends JdbcBlob[F] {
 
   val free: F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id free()")
+      rts.log.unsafe.trace(value, "free()")
       value.free()
     }
 
   val getBinaryStream: F[InputStream] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getBinaryStream()")
+      rts.log.unsafe.trace(value, "getBinaryStream()")
       value.getBinaryStream()
     }
 
   def getBinaryStream(a: Long, b: Long): F[InputStream] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getBinaryStream($a, $b)")
+      rts.log.unsafe.trace(value, s"getBinaryStream($a, $b)")
       value.getBinaryStream(a, b)
     }
 
   def getBytes(a: Long, b: Int): F[Array[Byte]] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getBytes($a, $b)")
+      rts.log.unsafe.trace(value, s"getBytes($a, $b)")
       value.getBytes(a, b)
     }
 
   val length: F[Long] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id length()")
+      rts.log.unsafe.trace(value, "length()")
       value.length()
     }
 
   def position(a: Array[Byte], b: Long): F[Long] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id position($a, $b)")
+      rts.log.unsafe.trace(value, s"position($a, $b)")
       value.position(a, b)
     }
 
   def position(a: Blob, b: Long): F[Long] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id position($a, $b)")
+      rts.log.unsafe.trace(value, s"position($a, $b)")
       value.position(a, b)
     }
 
   def setBinaryStream(a: Long): F[OutputStream] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setBinaryStream($a)")
+      rts.log.unsafe.trace(value, s"setBinaryStream($a)")
       value.setBinaryStream(a)
     }
 
   def setBytes(a: Long, b: Array[Byte]): F[Int] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setBytes($a, $b)")
+      rts.log.unsafe.trace(value, s"setBytes($a, $b)")
       value.setBytes(a, b)
     }
 
   def setBytes(a: Long, b: Array[Byte], c: Int, d: Int): F[Int] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setBytes($a, $b, $c, $d)")
+      rts.log.unsafe.trace(value, s"setBytes($a, $b, $c, $d)")
       value.setBytes(a, b, c, d)
     }
 
   def truncate(a: Long): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id truncate($a)")
+      rts.log.unsafe.trace(value, s"truncate($a)")
       value.truncate(a)
     }
 

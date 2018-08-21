@@ -22,14 +22,6 @@ final case class Transactor[F[_]](
   connector: Connector[F]
 ) {
 
-  /** The runtime system used for managing blocking operations, provided by `interp.rts`. */
-  def rts: RTS[F] =
-    interp.rts
-
-  /** The logger used for JDBC tracing, provided by `interp.log`. */
-  def log: Logger[F] =
-    interp.log
-
   /**
    * `Resource` yielding a `Connection[F]`, which will be closed after use. Note that `strategy` is
    * not consulted; any configuration or transactional handling must be performed manually.

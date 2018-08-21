@@ -53,12 +53,12 @@ final case class PreparedStatement[F[_]: Sync](jdbc: AsyncPreparedStatement[F], 
   ): Pipe[F, A, Array[Int]] = as =>
     as.chunks.evalMap { chunk =>
       interp.rts.newBlockingPrimitive {
-        if (interp.log.underlying.isTraceEnabled) {
+        interp.rts.log.unsafe.trace(jdbc.value, {
           val types = wa.puts.map { case (g, _) =>
             g.typeStack.head.fold("«unknown»")(_.toString)
           }
-          interp.log.underlying.trace(s"${jdbc.id} addBatch(${chunk.size}) of ${types.mkString(", ")}")
-        }
+          s"addBatch(${chunk.size}) of ${types.mkString(", ")}"
+        })
         chunk.foreach { a =>
           wa.unsafeSet(jdbc.value, 1, a)
           jdbc.value.addBatch

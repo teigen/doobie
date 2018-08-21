@@ -17,39 +17,29 @@ import java.util.Map
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncRef[F[_]: Sync](val value: Ref, val rts: RTS[F], val log: Logger[F]) extends JdbcRef[F] {
-
-  val id: String =
-    s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} Ref".padTo(28, ' ')
-
-  private val jlog: JLogger =
-    log.underlying
+class AsyncRef[F[_]: Sync](val value: Ref, val rts: RTS[F]) extends JdbcRef[F] {
 
   val getBaseTypeName: F[String] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getBaseTypeName()")
+      rts.log.unsafe.trace(value, "getBaseTypeName()")
       value.getBaseTypeName()
     }
 
   val getObject: F[AnyRef] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getObject()")
+      rts.log.unsafe.trace(value, "getObject()")
       value.getObject()
     }
 
   def getObject(a: Map[String, Class[_]]): F[AnyRef] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getObject($a)")
+      rts.log.unsafe.trace(value, s"getObject($a)")
       value.getObject(a)
     }
 
   def setObject(a: AnyRef): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setObject($a)")
+      rts.log.unsafe.trace(value, s"setObject($a)")
       value.setObject(a)
     }
 

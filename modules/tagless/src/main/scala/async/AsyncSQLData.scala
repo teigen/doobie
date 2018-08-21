@@ -18,32 +18,23 @@ import java.sql.SQLOutput
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncSQLData[F[_]: Sync](val value: SQLData, val rts: RTS[F], val log: Logger[F]) extends JdbcSQLData[F] {
-
-  val id: String =
-    s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} SQLData".padTo(28, ' ')
-
-  private val jlog: JLogger =
-    log.underlying
+class AsyncSQLData[F[_]: Sync](val value: SQLData, val rts: RTS[F]) extends JdbcSQLData[F] {
 
   val getSQLTypeName: F[String] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getSQLTypeName()")
+      rts.log.unsafe.trace(value, "getSQLTypeName()")
       value.getSQLTypeName()
     }
 
   def readSQL(a: SQLInput, b: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id readSQL($a, $b)")
+      rts.log.unsafe.trace(value, s"readSQL($a, $b)")
       value.readSQL(a, b)
     }
 
   def writeSQL(a: SQLOutput): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeSQL($a)")
+      rts.log.unsafe.trace(value, s"writeSQL($a)")
       value.writeSQL(a)
     }
 

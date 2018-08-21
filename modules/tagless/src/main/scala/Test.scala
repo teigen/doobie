@@ -4,7 +4,6 @@
 
 package doobie.tagless
 
-import cats._
 import cats.effect._
 import cats.implicits._
 import doobie.syntax.string._
@@ -47,12 +46,9 @@ object Test extends IOApp {
 
   }
 
-  def transactor[F[_]: Async: RTS]: Transactor[F] = {
-    Transactor[F](
-      Interpreter(
-        implicitly[RTS[F]],
-        Logger.getLogger("test")
-      ),
+  def transactor[F[_]: Async: RTS]: Transactor[F] =
+    Transactor(
+      Interpreter.default,
       Strategy.transactional,
       Connector.fromDriverManager(
         "org.postgresql.Driver",
@@ -61,14 +57,15 @@ object Test extends IOApp {
         ""
       )
     )
-  }
 
-  def dbProgram[F[_]: Sync](c: Connection[F]): F[Unit] =
+  def dbProgram[F[_]: Sync](c: Connection[F])(
+    implicit rts: RTS[F]
+  ): F[Unit] =
     for {
       _  <- c.countryStream.to(c.countrySink).compile.drain
-      // _  <- c.log.info("Doing other work inside F")
+      _  <- rts.log.trace(this, "Doing some work inside F.")
       cs <- c.countriesByCode(Code("FRA"))
-      // _  <- c.log.info(cs.toString)
+      _  <- rts.log.trace(this, s"The answer was $cs")
     } yield ()
 
   implicit val ioRTS: RTS[IO] =
@@ -79,10 +76,10 @@ object Test extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
-      _ <- IO(System.setProperty(s"org.slf4j.simpleLogger.log.test", "trace"))
-      _ <- ioTransactor.log.info("Starting up.")
+      _ <- IO(System.setProperty(s"org.slf4j.simpleLogger.log.doobie-rts", "trace"))
+      _ <- ioRTS.log.trace(this, "Starting up.")
       _ <- ioTransactor.transact(dbProgram(_))
-      _ <- ioTransactor.log.info(s"Done.")
+      _ <- ioRTS.log.trace(this, s"Done.")
     } yield ExitCode.Success
 
 }

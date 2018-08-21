@@ -84,12 +84,12 @@ final case class ResultSet[F[_]: Sync](jdbc: AsyncResultSet[F], interp: Interpre
   ): F[C[B]] =
     interp.rts.newBlockingPrimitive {
 
-      if (interp.log.underlying.isTraceEnabled) {
+      interp.rts.log.unsafe.trace(jdbc.value, {
         val types = ra.gets.map { case (g, _) =>
           g.typeStack.last.fold("«unknown»")(_.toString)
         }
-        interp.log.underlying.trace(s"${jdbc.id} chunkMap($chunkSize) of ${types.mkString(", ")}")
-      }
+        s"chunkMap($chunkSize) of ${types.mkString(", ")}"
+      })
 
       @tailrec
       def go(accum: Builder[B, C[B]], n: Int): C[B] =
@@ -114,12 +114,12 @@ final case class ResultSet[F[_]: Sync](jdbc: AsyncResultSet[F], interp: Interpre
   ): F[C[B]] =
     interp.rts.newBlockingPrimitive {
 
-      if (interp.log.underlying.isTraceEnabled) {
+      interp.rts.log.unsafe.trace(jdbc.value, {
         val types = ra.gets.map { case (g, _) =>
           g.typeStack.last.fold("«unknown»")(_.toString)
         }
-        interp.log.underlying.trace(s"${jdbc.id} chunkMapA($chunkSize) of ${types.mkString(", ")}")
-      }
+        s"chunkMapA($chunkSize) of ${types.mkString(", ")}"
+      })
 
       @tailrec
       def go(accum: C[B], n: Int): C[B] =

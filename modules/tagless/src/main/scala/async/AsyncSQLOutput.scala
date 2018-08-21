@@ -33,207 +33,173 @@ import java.sql.{ Array => SqlArray }
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncSQLOutput[F[_]: Sync](val value: SQLOutput, val rts: RTS[F], val log: Logger[F]) extends JdbcSQLOutput[F] {
-
-  val id: String =
-    s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} SQLOutput".padTo(28, ' ')
-
-  private val jlog: JLogger =
-    log.underlying
+class AsyncSQLOutput[F[_]: Sync](val value: SQLOutput, val rts: RTS[F]) extends JdbcSQLOutput[F] {
 
   def writeArray(a: SqlArray): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeArray($a)")
+      rts.log.unsafe.trace(value, s"writeArray($a)")
       value.writeArray(a)
     }
 
   def writeAsciiStream(a: InputStream): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeAsciiStream($a)")
+      rts.log.unsafe.trace(value, s"writeAsciiStream($a)")
       value.writeAsciiStream(a)
     }
 
   def writeBigDecimal(a: BigDecimal): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeBigDecimal($a)")
+      rts.log.unsafe.trace(value, s"writeBigDecimal($a)")
       value.writeBigDecimal(a)
     }
 
   def writeBinaryStream(a: InputStream): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeBinaryStream($a)")
+      rts.log.unsafe.trace(value, s"writeBinaryStream($a)")
       value.writeBinaryStream(a)
     }
 
   def writeBlob(a: Blob): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeBlob($a)")
+      rts.log.unsafe.trace(value, s"writeBlob($a)")
       value.writeBlob(a)
     }
 
   def writeBoolean(a: Boolean): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeBoolean($a)")
+      rts.log.unsafe.trace(value, s"writeBoolean($a)")
       value.writeBoolean(a)
     }
 
   def writeByte(a: Byte): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeByte($a)")
+      rts.log.unsafe.trace(value, s"writeByte($a)")
       value.writeByte(a)
     }
 
   def writeBytes(a: Array[Byte]): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeBytes($a)")
+      rts.log.unsafe.trace(value, s"writeBytes($a)")
       value.writeBytes(a)
     }
 
   def writeCharacterStream(a: Reader): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeCharacterStream($a)")
+      rts.log.unsafe.trace(value, s"writeCharacterStream($a)")
       value.writeCharacterStream(a)
     }
 
   def writeClob(a: Clob): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeClob($a)")
+      rts.log.unsafe.trace(value, s"writeClob($a)")
       value.writeClob(a)
     }
 
   def writeDate(a: Date): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeDate($a)")
+      rts.log.unsafe.trace(value, s"writeDate($a)")
       value.writeDate(a)
     }
 
   def writeDouble(a: Double): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeDouble($a)")
+      rts.log.unsafe.trace(value, s"writeDouble($a)")
       value.writeDouble(a)
     }
 
   def writeFloat(a: Float): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeFloat($a)")
+      rts.log.unsafe.trace(value, s"writeFloat($a)")
       value.writeFloat(a)
     }
 
   def writeInt(a: Int): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeInt($a)")
+      rts.log.unsafe.trace(value, s"writeInt($a)")
       value.writeInt(a)
     }
 
   def writeLong(a: Long): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeLong($a)")
+      rts.log.unsafe.trace(value, s"writeLong($a)")
       value.writeLong(a)
     }
 
   def writeNClob(a: NClob): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeNClob($a)")
+      rts.log.unsafe.trace(value, s"writeNClob($a)")
       value.writeNClob(a)
     }
 
   def writeNString(a: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeNString($a)")
+      rts.log.unsafe.trace(value, s"writeNString($a)")
       value.writeNString(a)
     }
 
   def writeObject(a: AnyRef, b: SQLType): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeObject($a, $b)")
+      rts.log.unsafe.trace(value, s"writeObject($a, $b)")
       value.writeObject(a, b)
     }
 
   def writeObject(a: SQLData): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeObject($a)")
+      rts.log.unsafe.trace(value, s"writeObject($a)")
       value.writeObject(a)
     }
 
   def writeRef(a: Ref): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeRef($a)")
+      rts.log.unsafe.trace(value, s"writeRef($a)")
       value.writeRef(a)
     }
 
   def writeRowId(a: RowId): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeRowId($a)")
+      rts.log.unsafe.trace(value, s"writeRowId($a)")
       value.writeRowId(a)
     }
 
   def writeSQLXML(a: SQLXML): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeSQLXML($a)")
+      rts.log.unsafe.trace(value, s"writeSQLXML($a)")
       value.writeSQLXML(a)
     }
 
   def writeShort(a: Short): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeShort($a)")
+      rts.log.unsafe.trace(value, s"writeShort($a)")
       value.writeShort(a)
     }
 
   def writeString(a: String): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeString($a)")
+      rts.log.unsafe.trace(value, s"writeString($a)")
       value.writeString(a)
     }
 
   def writeStruct(a: Struct): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeStruct($a)")
+      rts.log.unsafe.trace(value, s"writeStruct($a)")
       value.writeStruct(a)
     }
 
   def writeTime(a: Time): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeTime($a)")
+      rts.log.unsafe.trace(value, s"writeTime($a)")
       value.writeTime(a)
     }
 
   def writeTimestamp(a: Timestamp): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeTimestamp($a)")
+      rts.log.unsafe.trace(value, s"writeTimestamp($a)")
       value.writeTimestamp(a)
     }
 
   def writeURL(a: URL): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id writeURL($a)")
+      rts.log.unsafe.trace(value, s"writeURL($a)")
       value.writeURL(a)
     }
 

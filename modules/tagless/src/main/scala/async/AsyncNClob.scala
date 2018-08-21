@@ -21,102 +21,83 @@ import java.sql.NClob
  * into blocking operations on `RTS[F]`, logged at `TRACE` level on `log`.
  */
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
-class AsyncNClob[F[_]: Sync](val value: NClob, val rts: RTS[F], val log: Logger[F]) extends JdbcNClob[F] {
-
-  val id: String =
-    s"${System.identityHashCode(value).toHexString.padTo(8, ' ')} NClob".padTo(28, ' ')
-
-  private val jlog: JLogger =
-    log.underlying
+class AsyncNClob[F[_]: Sync](val value: NClob, val rts: RTS[F]) extends JdbcNClob[F] {
 
   val free: F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id free()")
+      rts.log.unsafe.trace(value, "free()")
       value.free()
     }
 
   val getAsciiStream: F[InputStream] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getAsciiStream()")
+      rts.log.unsafe.trace(value, "getAsciiStream()")
       value.getAsciiStream()
     }
 
   val getCharacterStream: F[Reader] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getCharacterStream()")
+      rts.log.unsafe.trace(value, "getCharacterStream()")
       value.getCharacterStream()
     }
 
   def getCharacterStream(a: Long, b: Long): F[Reader] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getCharacterStream($a, $b)")
+      rts.log.unsafe.trace(value, s"getCharacterStream($a, $b)")
       value.getCharacterStream(a, b)
     }
 
   def getSubString(a: Long, b: Int): F[String] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id getSubString($a, $b)")
+      rts.log.unsafe.trace(value, s"getSubString($a, $b)")
       value.getSubString(a, b)
     }
 
   val length: F[Long] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id length()")
+      rts.log.unsafe.trace(value, "length()")
       value.length()
     }
 
   def position(a: Clob, b: Long): F[Long] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id position($a, $b)")
+      rts.log.unsafe.trace(value, s"position($a, $b)")
       value.position(a, b)
     }
 
   def position(a: String, b: Long): F[Long] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id position($a, $b)")
+      rts.log.unsafe.trace(value, s"position($a, $b)")
       value.position(a, b)
     }
 
   def setAsciiStream(a: Long): F[OutputStream] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setAsciiStream($a)")
+      rts.log.unsafe.trace(value, s"setAsciiStream($a)")
       value.setAsciiStream(a)
     }
 
   def setCharacterStream(a: Long): F[Writer] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setCharacterStream($a)")
+      rts.log.unsafe.trace(value, s"setCharacterStream($a)")
       value.setCharacterStream(a)
     }
 
   def setString(a: Long, b: String): F[Int] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setString($a, $b)")
+      rts.log.unsafe.trace(value, s"setString($a, $b)")
       value.setString(a, b)
     }
 
   def setString(a: Long, b: String, c: Int, d: Int): F[Int] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id setString($a, $b, $c, $d)")
+      rts.log.unsafe.trace(value, s"setString($a, $b, $c, $d)")
       value.setString(a, b, c, d)
     }
 
   def truncate(a: Long): F[Unit] =
     rts.newBlockingPrimitive {
-      if (jlog.isTraceEnabled)
-        jlog.trace(s"$id truncate($a)")
+      rts.log.unsafe.trace(value, s"truncate($a)")
       value.truncate(a)
     }
 

@@ -27,18 +27,24 @@ object Connector {
         implicit rts: RTS[F]
       ): Connector[F] =
         new Connector[F] {
-          def connect =
-            Resource.make(
-              rts.newBlockingPrimitive {
-                Class.forName(driver)
-                val c = conn
-                rts.log.trace(c, "«fresh connection»")
-                c
-              }
-            )(c => rts.newBlockingPrimitive {
-              org.slf4j.LoggerFactory.getLogger("***").trace("CLOSING CONNECTION")
+
+          val open: F[sql.Connection] =
+            rts.newBlockingPrimitive {
+              Class.forName(driver)
+              val c = conn
+              rts.log.unsafe.trace(c, "«fresh connection»")
+              c
+            }
+
+          def close(c: sql.Connection): F[Unit] =
+            rts.newBlockingPrimitive {
+              rts.log.unsafe.trace(c, "close()")
               c.close
-            })
+            }
+
+          val connect =
+            Resource.make(open)(close)
+
         }
 
       def apply[F[_]: RTS: Sync](driver: String, url: String): Connector[F] =

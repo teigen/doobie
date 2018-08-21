@@ -7,28 +7,55 @@ package doobie.tagless
 import cats.effect.Sync
 import org.slf4j.{ Logger => JLogger, LoggerFactory }
 
-// TODO: replace with Log4Cats, assuming it gives access to underlying
+@SuppressWarnings(Array("org.wartremover.warts.DefaultArguments"))
+final case class Logger[F[_]: Sync](
+  name:        String,
+  prefixWidth: Int     = 30,
+  colored:     Boolean = true
+) {
 
-final case class Logger[F[_]: Sync](underlying: JLogger) {
+  val underlying: JLogger =
+    LoggerFactory.getLogger(name)
 
-  def trace(s: => String): F[Unit] =
-    Sync[F].delay {
+  val nop: F[Unit] =
+    Sync[F].pure(())
+
+  private val colors: Array[String] = {
+    import Console._
+    val cs = Array(RED, GREEN, BLUE, YELLOW, MAGENTA, CYAN)
+    cs ++ cs.map(BOLD + _)
+  }
+
+  def color(subject: AnyRef): String =
+    colors(System.identityHashCode(subject) % colors.length)
+
+  def format(subject: AnyRef, message: String): String = {
+    val cname  = subject.getClass.getSimpleName // TODO: make this more robust
+    val hash   = System.identityHashCode(subject).toHexString.padTo(8, ' ')
+    val prefix = s"$hash $cname".padTo(prefixWidth, ' ').take(prefixWidth)
+    val done   = s"$prefix $message"
+    if (colored) s"${color(subject)}$done${Console.RESET}"
+    else done
+  }
+
+  def trace(subject: AnyRef, message: => String): F[Unit] =
+    Sync[F].delay(unsafe.trace(subject, message))
+
+  def info(subject: AnyRef, message: => String): F[Unit] =
+    Sync[F].delay(unsafe.info(subject, message))
+
+  object unsafe {
+
+    def trace(subject: AnyRef, message: => String): Unit =
       if (underlying.isTraceEnabled)
-        underlying.trace(s)
-    }
+        underlying.trace(format(subject, message))
 
-  def info(s: => String): F[Unit] =
-    Sync[F].delay {
+    def info(subject: AnyRef, message: => String): Unit =
       if (underlying.isInfoEnabled)
-        underlying.info(s)
-    }
+        underlying.info(format(subject, message))
 
-  // IT WOULD BE NICE HERE IF WE COULD KEEP A PER-TRANSACTION MAP FROM OBJECT HANDLES TO ANSI
-  // COLORS SO WE COULD SHOW EACH OBJECT AS ITS OWN COLOR IN THE LOG. IN PRACTICE THERE WILL
-  // RARELY BE MORE THAN THREE.
+  }
 
 }
-object Logger {
-  def getLogger[F[_]: Sync](name: String): Logger[F] =
-    Logger(LoggerFactory.getLogger(name))
-}
+
+

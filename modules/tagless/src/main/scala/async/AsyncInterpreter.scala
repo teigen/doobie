@@ -22,20 +22,20 @@ import java.sql.PreparedStatement
 import java.sql.CallableStatement
 import java.sql.ResultSet
 
-class AsyncInterpreter[F[_]: Sync](val rts: RTS[F], val log: Logger[F]) extends JdbcInterpreter[F] {
-  def forNClob(a: NClob) = new AsyncNClob[F](a, rts, log)
-  def forBlob(a: Blob) = new AsyncBlob[F](a, rts, log)
-  def forClob(a: Clob) = new AsyncClob[F](a, rts, log)
-  def forDatabaseMetaData(a: DatabaseMetaData) = new AsyncDatabaseMetaData[F](a, rts, log)
-  def forDriver(a: Driver) = new AsyncDriver[F](a, rts, log)
-  def forRef(a: Ref) = new AsyncRef[F](a, rts, log)
-  def forSQLData(a: SQLData) = new AsyncSQLData[F](a, rts, log)
-  def forSQLInput(a: SQLInput) = new AsyncSQLInput[F](a, rts, log)
-  def forSQLOutput(a: SQLOutput) = new AsyncSQLOutput[F](a, rts, log)
-  def forConnection(a: Connection) = new AsyncConnection[F](a, rts, log)
-  def forStatement(a: Statement) = new AsyncStatement[F](a, rts, log)
-  def forPreparedStatement(a: PreparedStatement) = new AsyncPreparedStatement[F](a, rts, log)
-  def forCallableStatement(a: CallableStatement) = new AsyncCallableStatement[F](a, rts, log)
-  def forResultSet(a: ResultSet) = new AsyncResultSet[F](a, rts, log)
+class AsyncInterpreter[F[_]: Sync](val rts: RTS[F]) extends JdbcInterpreter[F] {
+  def forNClob(a: NClob) = new AsyncNClob[F](a, rts)
+  def forBlob(a: Blob) = new AsyncBlob[F](a, rts)
+  def forClob(a: Clob) = new AsyncClob[F](a, rts)
+  def forDatabaseMetaData(a: DatabaseMetaData) = new AsyncDatabaseMetaData[F](a, rts)
+  def forDriver(a: Driver) = new AsyncDriver[F](a, rts)
+  def forRef(a: Ref) = new AsyncRef[F](a, rts)
+  def forSQLData(a: SQLData) = new AsyncSQLData[F](a, rts)
+  def forSQLInput(a: SQLInput) = new AsyncSQLInput[F](a, rts)
+  def forSQLOutput(a: SQLOutput) = new AsyncSQLOutput[F](a, rts)
+  def forConnection(a: Connection) = new AsyncConnection[F](a, rts)
+  def forStatement(a: Statement) = new AsyncStatement[F](a, rts)
+  def forPreparedStatement(a: PreparedStatement) = new AsyncPreparedStatement[F](a, rts)
+  def forCallableStatement(a: CallableStatement) = new AsyncCallableStatement[F](a, rts)
+  def forResultSet(a: ResultSet) = new AsyncResultSet[F](a, rts)
 }
 

@@ -13,9 +13,6 @@ final case class Interpreter[F[_]: Sync](jdbc: AsyncInterpreter[F]) {
   /** The runtime system used for managing blocking operations, provided by `jdbc.rts`. */
   def rts: RTS[F] = jdbc.rts
 
-  /** The logger used for JDBC tracing, provided by `jdbc.log`. */
-  def log: Logger[F] = jdbc.log
-
   def forNClob(a: java.sql.NClob): NClob[F] = NClob(jdbc.forNClob(a), this)
   def forBlob(a: java.sql.Blob): Blob[F] = Blob(jdbc.forBlob(a), this)
   def forClob(a: java.sql.Clob): Clob[F] = Clob(jdbc.forClob(a), this)
@@ -35,8 +32,8 @@ final case class Interpreter[F[_]: Sync](jdbc: AsyncInterpreter[F]) {
 
 @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
 object Interpreter {
-  def apply[F[_]: Sync](rts: RTS[F], log: Logger[F]): Interpreter[F] =
-    Interpreter(new AsyncInterpreter[F](rts, log))
+  def default[F[_]: Sync](implicit rts: RTS[F]): Interpreter[F] =
+    Interpreter(new AsyncInterpreter[F](rts))
 }
 
 // Unimplemented
