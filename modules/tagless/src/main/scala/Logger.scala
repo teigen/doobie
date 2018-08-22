@@ -17,7 +17,7 @@ final case class Logger[F[_]: Sync](
   val underlying: JLogger =
     LoggerFactory.getLogger(name)
 
-  val nop: F[Unit] =
+  private val nop: F[Unit] =
     Sync[F].pure(())
 
   private val colors: Array[String] = {
@@ -26,10 +26,10 @@ final case class Logger[F[_]: Sync](
     cs ++ cs.map(BOLD + _)
   }
 
-  def color(subject: AnyRef): String =
+  private def color(subject: AnyRef): String =
     colors(System.identityHashCode(subject) % colors.length)
 
-  def format(subject: AnyRef, message: String): String = {
+  private def format(subject: AnyRef, message: String): String = {
     val cname  = subject.getClass.getSimpleName // TODO: make this more robust
     val hash   = System.identityHashCode(subject).toHexString.padTo(8, ' ')
     val prefix = s"$hash $cname".padTo(prefixWidth, ' ').take(prefixWidth)

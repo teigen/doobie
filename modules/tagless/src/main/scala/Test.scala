@@ -58,14 +58,12 @@ object Test extends IOApp {
       )
     )
 
-  def dbProgram[F[_]: Sync](c: Connection[F])(
-    implicit rts: RTS[F]
-  ): F[Unit] =
+  def dbProgram[F[_]: Sync](c: Connection[F], log: Logger[F]): F[Unit] =
     for {
       _  <- c.countryStream.to(c.countrySink).compile.drain
-      _  <- rts.log.trace(this, "Doing some work inside F.")
+      _  <- log.trace(this, "Doing some work inside F.")
       cs <- c.countriesByCode(Code("FRA"))
-      _  <- rts.log.trace(this, s"The answer was $cs")
+      _  <- log.trace(this, s"The answer was $cs")
     } yield ()
 
   implicit val ioRTS: RTS[IO] =
@@ -78,7 +76,7 @@ object Test extends IOApp {
     for {
       _ <- IO(System.setProperty(s"org.slf4j.simpleLogger.log.doobie-rts", "trace"))
       _ <- ioRTS.log.trace(this, "Starting up.")
-      _ <- ioTransactor.transact(dbProgram(_))
+      _ <- ioTransactor.transact(dbProgram(_, ioRTS.log))
       _ <- ioRTS.log.trace(this, s"Done.")
     } yield ExitCode.Success
 
