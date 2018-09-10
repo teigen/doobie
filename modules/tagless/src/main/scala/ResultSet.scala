@@ -25,7 +25,7 @@ final case class ResultSet[F[_]: Sync](jdbc: AsyncResultSet[F], interp: Interpre
     Stream.eval_(jdbc.setFetchSize(chunkSize)) ++
     Stream.repeatEval(chunk[Vector, A](chunkSize))
           .takeThrough(_.length === chunkSize)
-          .flatMap((c: Vector[A]) => Stream.emits(c))
+          .flatMap(Stream.emits)
 
   /** Move to the next row, if any, and read into `A`. */
   def next[A](

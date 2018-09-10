@@ -15,36 +15,8 @@ import fs2.{ Stream, Sink }
 // AT A VERY LOW LEVEL BECAUSE IT'S THE PRIMARY PERF HOTSPOT.
 
 @SuppressWarnings(Array("org.wartremover.warts.ToString"))
-object Test extends IOApp {
-
-  final case class Code(code: String)
-  final case class Country(code: Code, name: String)
-
-  final implicit class CountryRepo[F[_]](val c: Connection[F]) {
-
-    val countryStream: Stream[F, Country] =
-      c.stream(Statements.countries, 50)
-
-    val countrySink: Sink[F, Country] =
-      c.sink(Statements.up)
-
-    def countriesByCode(k: Code): F[List[Country]] =
-      c.to[List](Statements.byCode(k))
-
-  }
-
-  object Statements {
-
-    val countries: Query[Country] =
-      Query(sql"select * from country")
-
-    def up: Update[Country] =
-      Update(sql"insert into country2 (code, name) values (?, ?)")
-
-    def byCode(c: Code): Query[Country] =
-      Query(sql"select code, name from country where code = $c")
-
-  }
+object Test extends RTS.App {
+  import CountryRepo._
 
   def transactor[F[_]: Async: RTS]: Transactor[F] =
     Transactor(
@@ -60,25 +32,55 @@ object Test extends IOApp {
 
   def dbProgram[F[_]: Sync](c: Connection[F], log: Logger[F]): F[Unit] =
     for {
-      _  <- c.countryStream.to(c.countrySink).compile.drain
+      _  <- c.country.stream.to(c.country.sink).compile.drain
       _  <- log.trace(this, "Doing some work inside F.")
-      cs <- c.countriesByCode(Code("FRA"))
+      cs <- c.country.selectByCode(Code("FRA"))
       _  <- log.trace(this, s"The answer was $cs")
     } yield ()
-
-  implicit val ioRTS: RTS[IO] =
-    RTS.default[IO]
-
-  val ioTransactor: Transactor[IO] =
-    transactor[IO]
 
   def run(args: List[String]): IO[ExitCode] =
     for {
       _ <- IO(System.setProperty(s"org.slf4j.simpleLogger.log.doobie-rts", "trace"))
       _ <- ioRTS.log.trace(this, "Starting up.")
-      _ <- ioTransactor.transact(dbProgram(_, ioRTS.log))
+      xa = transactor[IO]
+      _ <- xa.transact(dbProgram(_, ioRTS.log))
       _ <- ioRTS.log.trace(this, s"Done.")
     } yield ExitCode.Success
 
 }
 
+final case class Code(code: String)
+final case class Country(code: Code, name: String)
+
+object CountryRepo {
+
+  final implicit class Ops[F[_]](val c: Connection[F]) {
+    object country {
+
+      val stream: Stream[F, Country] =
+        c.stream(Statements.countries, 50)
+
+      val sink: Sink[F, Country] =
+        c.sink(Statements.up)
+
+      def selectByCode(k: Code): F[List[Country]] =
+        c.to[List](Statements.byCode(k))
+
+    }
+  }
+
+  object Statements {
+
+    val countries: Query[Country] =
+      Query(sql"select * from country")
+
+    def up: Update[Country] =
+      Update(sql"insert into country2 (code, name) values (?, ?)")
+
+    def byCode(c: Code): Query[Country] =
+      Query(sql"select code, name from country where code = $c")
+
+  }
+
+
+}

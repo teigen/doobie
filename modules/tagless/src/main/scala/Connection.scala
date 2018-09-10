@@ -16,7 +16,7 @@ import scala.collection.generic.CanBuildFrom
 @SuppressWarnings(Array("org.wartremover.warts.DefaultArguments", "org.wartremover.warts.Overloading"))
 final case class Connection[F[_]: Sync](jdbc: JdbcConnection[F], interp: Interpreter[F]) {
 
-  /** Prepare a statement. */
+  /** Prepare a statement, yielding a `PreparedStatement`. */
   def prepareStatement(
     sql: String,
     resultSetType:        ResultSetType        = ResultSetType.TypeForwardOnly,
@@ -30,7 +30,7 @@ final case class Connection[F[_]: Sync](jdbc: JdbcConnection[F], interp: Interpr
       resultSetHoldability.toInt
     ).map(interp.forPreparedStatement))(_.jdbc.close)
 
-  /** Prepare and execute a statement. */
+  /** Prepare and execute a statement, yielding a `ResultSet`. */
   def executeQuery(
     fragment:             Fragment,
     chunkSize:            Int,

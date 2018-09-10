@@ -17,9 +17,6 @@ final case class Logger[F[_]: Sync](
   val underlying: JLogger =
     LoggerFactory.getLogger(name)
 
-  private val nop: F[Unit] =
-    Sync[F].pure(())
-
   private val colors: Array[String] = {
     import Console._
     val cs = Array(RED, GREEN, BLUE, YELLOW, MAGENTA, CYAN)

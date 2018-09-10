@@ -45,3 +45,20 @@ final case class Transactor[F[_]](
 
 }
 
+object Transactor {
+
+  /**
+   * Transactor with `Interpreter.default`, `Strategy.transactional`, and the given `Connector.`
+   * This is a reasonable choice for transactional back ends like Postgres.
+   */
+  def defaultTransactional[F[_]: Async: RTS](connector: Connector[F]): Transactor[F] =
+    Transactor(Interpreter.default, Strategy.transactional, connector)
+
+  /**
+   * Transactor with `Interpreter.default`, `Strategy.void`, and the given `Connector.` This is a
+   * reasonable choice for non-transactional back ends like Apache Hive.
+   */
+  def defaultVoid[F[_]: Async: RTS](connector: Connector[F]): Transactor[F] =
+    Transactor(Interpreter.default, Strategy.void, connector)
+
+}

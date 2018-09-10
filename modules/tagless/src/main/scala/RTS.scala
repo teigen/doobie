@@ -52,4 +52,8 @@ object RTS {
   def default[F[_]: Sync: ContextShift]: RTS[F] =
     new RTS(defaultBlockingContext, implicitly, Logger("doobie-rts", 30))
 
+  trait App extends IOApp {
+    implicit lazy val ioRTS: RTS[IO] = default
+  }
+
 }
