@@ -40,7 +40,7 @@ final case class Transactor[F[_]](
    * Apply a `Connection[F]` to `f`, with transaction handling as defined by `strategy`, yielding a
    * `Stream[F, A]`.
    */
-  def transactStream[A](f: Connection[F] => Stream[F, A])(implicit ev: Monad[F]): Stream[F, A] =
+  def transact[A](f: Connection[F] => Stream[F, A])(implicit ev: Monad[F]): Stream[F, A] =
     Stream.resource(connect).flatMap(strategy.transact(f))
 
 }

@@ -30,11 +30,11 @@ object Test extends RTS.App {
       )
     )
 
-  def dbProgram[F[_]: Sync](c: Connection[F], log: Logger[F]): F[Unit] =
+  def dbProgram[F[_]: Sync](c: CountryRepo[F], log: Logger[F]): F[Unit] =
     for {
-      _  <- c.country.stream.to(c.country.sink).compile.drain
+      _  <- c.stream.to(c.sink).compile.drain
       _  <- log.trace(this, "Doing some work inside F.")
-      cs <- c.country.selectByCode(Code("FRA"))
+      cs <- c.selectByCode(Code("FRA"))
       _  <- log.trace(this, s"The answer was $cs")
     } yield ()
 
@@ -43,7 +43,7 @@ object Test extends RTS.App {
       _ <- IO(System.setProperty(s"org.slf4j.simpleLogger.log.doobie-rts", "trace"))
       _ <- ioRTS.log.trace(this, "Starting up.")
       xa = transactor[IO]
-      _ <- xa.transact(dbProgram(_, ioRTS.log))
+      _ <- xa.transact(c => dbProgram(CountryRepo.fromConnection(c), ioRTS.log))
       _ <- ioRTS.log.trace(this, s"Done.")
     } yield ExitCode.Success
 
@@ -52,10 +52,16 @@ object Test extends RTS.App {
 final case class Code(code: String)
 final case class Country(code: Code, name: String)
 
+trait CountryRepo[F[_]] {
+  def stream: Stream[F, Country]
+  def sink: Sink[F, Country]
+  def selectByCode(k: Code): F[List[Country]]
+}
+
 object CountryRepo {
 
-  final implicit class Ops[F[_]](val c: Connection[F]) {
-    object country {
+  def fromConnection[F[_]](c: Connection[F]): CountryRepo[F] =
+    new CountryRepo[F] {
 
       val stream: Stream[F, Country] =
         c.stream(Statements.countries, 50)
@@ -67,7 +73,6 @@ object CountryRepo {
         c.to[List](Statements.byCode(k))
 
     }
-  }
 
   object Statements {
 
@@ -81,6 +86,5 @@ object CountryRepo {
       Query(sql"select code, name from country where code = $c")
 
   }
-
 
 }
